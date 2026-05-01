@@ -1,0 +1,49 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - '5000:5000'
+    environment:
+      - FLASK_APP=app:create_app
+      - FLASK_ENV=development
+      - POSTGRES_DB=EduManager
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - ENABLE_BOOTSTRAP_ENDPOINT=true
+      - BOOTSTRAP_TOKEN=local-bootstrap-token
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:5000/health'')"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: EduManager
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U user -d EduManager']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:

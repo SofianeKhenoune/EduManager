@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% block title %}Eleves | EduManager{% endblock %} {%
+block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Eleves</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+      >Retour dashboard</a
+    >
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Prenom *
+      <input type="text" name="first_name" required />
+    </label>
+    <label>
+      Nom *
+      <input type="text" name="last_name" required />
+    </label>
+    <label>
+      Email *
+      <input type="email" name="email" required />
+    </label>
+    <label>
+      Mot de passe *
+      <input type="password" name="password" required />
+    </label>
+    <label>
+      Rue *
+      <input type="text" name="street" required />
+    </label>
+    <label>
+      Ville *
+      <input type="text" name="city" required />
+    </label>
+    <label>
+      Code postal *
+      <input type="text" name="zip_code" required />
+    </label>
+    <label>
+      Date de naissance *
+      <input type="date" name="birth_date" required />
+    </label>
+    <label>
+      Site
+      <select name="site_id">
+        <option value="">Aucun</option>
+        {% for site in sites %}
+        <option value="{{ site.id }}">{{ site.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Ajouter eleve</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Liste des eleves</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Ville</th>
+          <th>Site</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td>{{ student.user.first_name }} {{ student.user.last_name }}</td>
+          <td>{{ student.user.email }}</td>
+          <td>{{ student.city }}</td>
+          <td>{{ student.site.name if student.site else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4">Aucun eleve pour le moment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

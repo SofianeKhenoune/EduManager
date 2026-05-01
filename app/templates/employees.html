@@ -1,0 +1,91 @@
+{% extends "base.html" %} {% block title %}Employes | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Employes</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+      >Retour dashboard</a
+    >
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Prenom *
+      <input type="text" name="first_name" required />
+    </label>
+    <label>
+      Nom *
+      <input type="text" name="last_name" required />
+    </label>
+    <label>
+      Email *
+      <input type="email" name="email" required />
+    </label>
+    <label>
+      Mot de passe *
+      <input type="password" name="password" required />
+    </label>
+    <label>
+      Date embauche *
+      <input type="date" name="hire_date" required />
+    </label>
+    <label>
+      Code employe *
+      <input type="text" name="employee_code" required />
+    </label>
+    <label>
+      Position
+      <select name="position_id">
+        <option value="">Aucune</option>
+        {% for position in positions %}
+        <option value="{{ position.id }}">{{ position.title }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Departement
+      <select name="department_id">
+        <option value="">Aucun</option>
+        {% for department in departments %}
+        <option value="{{ department.id }}">{{ department.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Ajouter employe</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Liste des employes</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Code</th>
+          <th>Departement</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for employee in employees %}
+        <tr>
+          <td>{{ employee.user.first_name }} {{ employee.user.last_name }}</td>
+          <td>{{ employee.user.email }}</td>
+          <td>{{ employee.employee_id }}</td>
+          <td>
+            {{ employee.department.name if employee.department else '-' }}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4">Aucun employe pour le moment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %} {% block title %}Cours | EduManager{% endblock %} {%
+block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Cours</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+      >Retour dashboard</a
+    >
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Titre *
+      <input type="text" name="title" required />
+    </label>
+    <label>
+      Enseignant *
+      <select name="teacher_id" required>
+        <option value="">Selectionner</option>
+        {% for teacher in teachers %}
+        <option value="{{ teacher.id }}">
+          {{ teacher.user.first_name }} {{ teacher.user.last_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Site
+      <select name="site_id">
+        <option value="">Aucun</option>
+        {% for site in sites %}
+        <option value="{{ site.id }}">{{ site.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Niveau
+      <select name="level">
+        <option value="">Aucun</option>
+        <option>PREPA</option>
+        <option>NIV1</option>
+        <option>NIV2</option>
+        <option>NIV3</option>
+        <option>NIV4</option>
+        <option>NIV5</option>
+        <option>NIV6</option>
+        <option>NIV7</option>
+      </select>
+    </label>
+    <label>
+      Jour
+      <select name="day">
+        <option value="">Aucun</option>
+        <option>lundi</option>
+        <option>mardi</option>
+        <option>mercredi</option>
+        <option>jeudi</option>
+        <option>vendredi</option>
+        <option>samedi</option>
+        <option>dimanche</option>
+      </select>
+    </label>
+    <label>
+      Creneau
+      <select name="time_slot">
+        <option value="">Aucun</option>
+        <option>matin</option>
+        <option>après-midi</option>
+      </select>
+    </label>
+    <label>
+      Heure debut
+      <input type="number" min="0" max="23" name="start_hour" />
+    </label>
+    <label>
+      Heure fin
+      <input type="number" min="0" max="23" name="end_hour" />
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Ajouter cours</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Liste des cours</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Enseignant</th>
+          <th>Jour</th>
+          <th>Creneau</th>
+          <th>Heures</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for course in courses %}
+        <tr>
+          <td>{{ course.title }}</td>
+          <td>
+            {{ course.teacher.user.first_name }} {{
+            course.teacher.user.last_name }}
+          </td>
+          <td>{{ course.day or '-' }}</td>
+          <td>{{ course.time_slot or '-' }}</td>
+          <td>
+            {% if course.start_hour is not none and course.end_hour is not none
+            %} {{ course.start_hour }}h - {{ course.end_hour }}h {% else %} - {%
+            endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">Aucun cours pour le moment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
