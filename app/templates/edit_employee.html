@@ -49,6 +49,10 @@
       <input type="email" name="email" value="{{ employee.user.email }}" required />
     </label>
     <label>
+      Téléphone
+      <input type="tel" name="phone_number" value="{{ employee.user.phone_number or '' }}" placeholder="+33 6 00 00 00 00" />
+    </label>
+    <label>
       Adresse
       <input type="text" name="address" value="{{ employee.address or '' }}" />
     </label>

@@ -278,6 +278,7 @@ def edit_employee(emp_id):
                     flash("Cette adresse e-mail est déjà utilisée.", "warning")
                     return redirect(url_for("main.edit_employee", emp_id=emp_id))
                 employee.user.email = email
+            employee.user.phone_number = request.form.get("phone_number", "").strip() or None
             hire_date = request.form.get("hire_date", "").strip()
             if hire_date:
                 employee.hire_date = _parse_date(hire_date)
