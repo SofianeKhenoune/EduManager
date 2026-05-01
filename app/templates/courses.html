@@ -112,7 +112,11 @@ block content %}
             endif %}
           </td>
           <td>
-            <a class="btn btn-secondary" href="{{ url_for('main.edit_course', course_id=course.id) }}">Modifier</a>
+            <a
+              class="btn btn-secondary"
+              href="{{ url_for('main.edit_course', course_id=course.id) }}"
+              >Modifier</a
+            >
           </td>
         </tr>
         {% else %}

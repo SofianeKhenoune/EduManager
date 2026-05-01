@@ -77,7 +77,11 @@ block content %}
           <td>{{ student.city }}</td>
           <td>{{ student.site.name if student.site else '-' }}</td>
           <td>
-            <a class="btn btn-secondary" href="{{ url_for('main.edit_student', student_id=student.id) }}">Modifier</a>
+            <a
+              class="btn btn-secondary"
+              href="{{ url_for('main.edit_student', student_id=student.id) }}"
+              >Modifier</a
+            >
           </td>
         </tr>
         {% else %}

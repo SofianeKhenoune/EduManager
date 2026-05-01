@@ -1,23 +1,40 @@
-{% extends "base.html" %} {% block title %}Modifier l'élève | EduManager{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Modifier l'élève | EduManager{%
+endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}">Retour</a>
+    <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}"
+      >Retour</a
+    >
   </div>
 
   <form method="post" class="form-grid">
     <label>
       Prénom *
-      <input type="text" name="first_name" value="{{ student.user.first_name }}" required />
+      <input
+        type="text"
+        name="first_name"
+        value="{{ student.user.first_name }}"
+        required
+      />
     </label>
     <label>
       Nom *
-      <input type="text" name="last_name" value="{{ student.user.last_name }}" required />
+      <input
+        type="text"
+        name="last_name"
+        value="{{ student.user.last_name }}"
+        required
+      />
     </label>
     <label>
       Email *
-      <input type="email" name="email" value="{{ student.user.email }}" required />
+      <input
+        type="email"
+        name="email"
+        value="{{ student.user.email }}"
+        required
+      />
     </label>
     <label>
       Rue *
@@ -29,18 +46,37 @@
     </label>
     <label>
       Code postal *
-      <input type="text" name="zip_code" value="{{ student.zip_code }}" required />
+      <input
+        type="text"
+        name="zip_code"
+        value="{{ student.zip_code }}"
+        required
+      />
     </label>
     <label>
       Date de naissance *
-      <input type="date" name="birth_date" value="{{ student.birth_date.isoformat() if student.birth_date else '' }}" required />
+      <input
+        type="date"
+        name="birth_date"
+        value="{{ student.birth_date.isoformat() if student.birth_date else '' }}"
+        required
+      />
     </label>
     <label>
       Site
       <select name="site_id">
         <option value="">Aucun</option>
         {% for site in sites %}
-        <option value="{{ site.id }}" {% if student.site_id == site.id %}selected{% endif %}>
+        <option
+          value="{{ site.id }}"
+          {%
+          if
+          student.site_id=""
+          ="site.id"
+          %}selected{%
+          endif
+          %}
+        >
           {{ site.name }}
         </option>
         {% endfor %}
@@ -54,8 +90,11 @@
 
 <section class="panel section-block">
   <h2>Supprimer cet élève</h2>
-  <form method="post" action="{{ url_for('main.delete_student', student_id=student.id) }}"
-        onsubmit="return confirm('Supprimer définitivement cet élève ?')">
+  <form
+    method="post"
+    action="{{ url_for('main.delete_student', student_id=student.id) }}"
+    onsubmit="return confirm('Supprimer définitivement cet élève ?');"
+  >
     <div class="form-actions">
       <button class="btn btn-danger" type="submit">Supprimer l'élève</button>
     </div>

@@ -56,7 +56,11 @@
           <td>{{ teacher.user.email }}</td>
           <td>{{ teacher.subject or '-' }}</td>
           <td>
-            <a class="btn btn-secondary" href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}">Modifier</a>
+            <a
+              class="btn btn-secondary"
+              href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}"
+              >Modifier</a
+            >
           </td>
         </tr>
         {% else %}

@@ -87,7 +87,11 @@
             {{ employee.department.name if employee.department else '-' }}
           </td>
           <td>
-            <a class="btn btn-secondary" href="{{ url_for('main.edit_employee', emp_id=employee.id) }}">Modifier</a>
+            <a
+              class="btn btn-secondary"
+              href="{{ url_for('main.edit_employee', emp_id=employee.id) }}"
+              >Modifier</a
+            >
           </td>
         </tr>
         {% else %}

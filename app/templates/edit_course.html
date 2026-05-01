@@ -1,9 +1,11 @@
-{% extends "base.html" %} {% block title %}Modifier le cours | EduManager{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Modifier le cours | EduManager{%
+endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ course.title }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.courses_page') }}">Retour</a>
+    <a class="btn btn-secondary" href="{{ url_for('main.courses_page') }}"
+      >Retour</a
+    >
   </div>
 
   <form method="post" class="form-grid">
@@ -16,7 +18,16 @@
       <select name="teacher_id" required>
         <option value="">Sélectionner</option>
         {% for teacher in teachers %}
-        <option value="{{ teacher.id }}" {% if course.teacher_id == teacher.id %}selected{% endif %}>
+        <option
+          value="{{ teacher.id }}"
+          {%
+          if
+          course.teacher_id=""
+          ="teacher.id"
+          %}selected{%
+          endif
+          %}
+        >
           {{ teacher.user.first_name }} {{ teacher.user.last_name }}
         </option>
         {% endfor %}
@@ -27,7 +38,16 @@
       <select name="site_id">
         <option value="">Aucun</option>
         {% for site in sites %}
-        <option value="{{ site.id }}" {% if course.site_id == site.id %}selected{% endif %}>
+        <option
+          value="{{ site.id }}"
+          {%
+          if
+          course.site_id=""
+          ="site.id"
+          %}selected{%
+          endif
+          %}
+        >
           {{ site.name }}
         </option>
         {% endfor %}
@@ -61,11 +81,23 @@
     </label>
     <label>
       Heure de début
-      <input type="number" min="0" max="23" name="start_hour" value="{{ course.start_hour if course.start_hour is not none else '' }}" />
+      <input
+        type="number"
+        min="0"
+        max="23"
+        name="start_hour"
+        value="{{ course.start_hour if course.start_hour is not none else '' }}"
+      />
     </label>
     <label>
       Heure de fin
-      <input type="number" min="0" max="23" name="end_hour" value="{{ course.end_hour if course.end_hour is not none else '' }}" />
+      <input
+        type="number"
+        min="0"
+        max="23"
+        name="end_hour"
+        value="{{ course.end_hour if course.end_hour is not none else '' }}"
+      />
     </label>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Enregistrer</button>
@@ -76,10 +108,15 @@
 <section class="panel section-block">
   <h2>Supprimer ce cours</h2>
   {% if course.enrollments %}
-  <p style="color: var(--ink-soft);">{{ course.enrollments|length }} inscription(s) seront aussi supprimées.</p>
+  <p style="color: var(--ink-soft)">
+    {{ course.enrollments|length }} inscription(s) seront aussi supprimées.
+  </p>
   {% endif %}
-  <form method="post" action="{{ url_for('main.delete_course', course_id=course.id) }}"
-        onsubmit="return confirm('Supprimer définitivement ce cours ?')">
+  <form
+    method="post"
+    action="{{ url_for('main.delete_course', course_id=course.id) }}"
+    onsubmit="return confirm('Supprimer définitivement ce cours ?');"
+  >
     <div class="form-actions">
       <button class="btn btn-danger" type="submit">Supprimer le cours</button>
     </div>
