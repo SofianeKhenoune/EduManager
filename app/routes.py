@@ -174,6 +174,9 @@ def employees_page():
                 flash("Le matricule doit être un nombre entier.", "warning")
                 return redirect(url_for("main.employees_page"))
             
+            # Formater en 5 chiffres avec zéros devant
+            employee_code = employee_code.zfill(5)
+            
             # Vérifier l'unicité du matricule
             existing_employee = Employee.query.filter_by(employee_id=employee_code).first()
             if existing_employee:

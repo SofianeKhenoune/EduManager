@@ -89,8 +89,8 @@ def import_employees_from_excel(excel_path: str) -> dict:
                 navigo_str = row[24]
                 pas_rate = row[25] if len(row) > 25 else None
                 
-                # Convertir matricule en chaîne (peut être entier Excel)
-                matricule = str(int(matricule_raw)).strip() if matricule_raw is not None else None
+                # Convertir matricule en chaîne et padder à 5 chiffres
+                matricule = str(int(matricule_raw)).zfill(5) if matricule_raw is not None else None
                 
                 # Validation minimale
                 if not first_name or not last_name:
