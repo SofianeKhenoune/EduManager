@@ -168,6 +168,17 @@ def employees_page():
             if not all([first_name, last_name, email, password, hire_date, employee_code]):
                 flash("Des champs obligatoires de l'employé sont manquants.", "warning")
                 return redirect(url_for("main.employees_page"))
+            
+            # Valider le format du matricule (5 chiffres)
+            if not employee_code.isdigit() or len(employee_code) != 5:
+                flash("Le matricule doit contenir exactement 5 chiffres.", "warning")
+                return redirect(url_for("main.employees_page"))
+            
+            # Vérifier l'unicité du matricule
+            existing_employee = Employee.query.filter_by(employee_id=employee_code).first()
+            if existing_employee:
+                flash(f"Le matricule {employee_code} est déjà utilisé.", "warning")
+                return redirect(url_for("main.employees_page"))
 
             user, error = _create_user(first_name, last_name, email, password, "staff")
             if error:

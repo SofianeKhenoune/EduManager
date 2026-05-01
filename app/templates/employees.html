@@ -30,8 +30,8 @@
       <input type="date" name="hire_date" required />
     </label>
     <label>
-      Matricule *
-      <input type="text" name="employee_code" required />
+      Matricule (5 chiffres) *
+      <input type="text" name="employee_code" pattern="\d{5}" placeholder="Ex: 12345" required title="Le matricule doit contenir exactement 5 chiffres" />
     </label>
     <label>
       Position

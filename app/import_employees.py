@@ -22,6 +22,7 @@ def import_employees_from_excel(excel_path: str) -> dict:
     - TYPE DE CONTRAT, Embauche, Période d'Essai, Fin de contrat, Durée contrat
     - Poste, Niveau, Indice, Nb h/semaine, Nb h/mois
     - Salaire horaire, Salaire mensuel Brut, Navigo, Taux PAS
+    - Matricule (5 chiffres - OBLIGATOIRE) ← À ajouter comme dernière colonne
     
     :param excel_path: Chemin du fichier Excel
     :return: Dictionnaire avec nombre d'employés importés et erreurs
@@ -87,10 +88,25 @@ def import_employees_from_excel(excel_path: str) -> dict:
                 monthly_salary = row[22]
                 navigo_str = row[23]
                 pas_rate = row[24]
+                # Matricule à 5 chiffres
+                matricule = str(row[25]).strip() if len(row) > 25 else None
                 
                 # Validation minimale
                 if not first_name or not last_name:
                     results["errors"].append(f"Ligne {row_idx}: Prénom ou Nom manquant")
+                    results["skipped"] += 1
+                    continue
+                
+                # Valider le matricule
+                if not matricule or not matricule.isdigit() or len(matricule) != 5:
+                    results["errors"].append(f"Ligne {row_idx} ({first_name} {last_name}): Matricule invalide (doit être 5 chiffres)")
+                    results["skipped"] += 1
+                    continue
+                
+                # Vérifier l'unicité du matricule
+                existing_by_matricule = Employee.query.filter_by(employee_id=matricule).first()
+                if existing_by_matricule:
+                    results["errors"].append(f"Ligne {row_idx}: Matricule {matricule} déjà utilisé")
                     results["skipped"] += 1
                     continue
                 
@@ -126,8 +142,8 @@ def import_employees_from_excel(excel_path: str) -> dict:
                 db.session.add(user)
                 db.session.flush()
                 
-                # Générer l'employee_id
-                employee_id = f"EMP{user.id:05d}"
+                # Utiliser le matricule du fichier Excel
+                employee_id = matricule
                 
                 # Traiter navigo (convert "Oui"/"Non" ou true/false)
                 navigo_pass = False
