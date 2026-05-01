@@ -48,9 +48,9 @@ def import_employees_from_excel(excel_path: str) -> dict:
             db.session.commit()
         
         # Récupérer/créer le département par défaut
-        default_dept = Department.query.filter_by(name='Général').first()
+        default_dept = Department.query.filter_by(name='Administration').first()
         if not default_dept:
-            default_dept = Department(name='Général')
+            default_dept = Department(name='Administration')
             db.session.add(default_dept)
             db.session.commit()
         
