@@ -93,6 +93,7 @@ block content %}
           <th>Jour</th>
           <th>Créneau</th>
           <th>Heures</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -110,10 +111,13 @@ block content %}
             %} {{ course.start_hour }}h - {{ course.end_hour }}h {% else %} - {%
             endif %}
           </td>
+          <td>
+            <a class="btn btn-secondary" href="{{ url_for('main.edit_course', course_id=course.id) }}">Modifier</a>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5">Aucun cours pour le moment.</td>
+          <td colspan="6">Aucun cours pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>

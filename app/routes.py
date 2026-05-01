@@ -23,6 +23,12 @@ def _optional_int(value: str):
     return int(value)
 
 
+def _optional_float(value: str):
+    if value in (None, ""):
+        return None
+    return float(value)
+
+
 def _parse_date(value: str):
     return datetime.strptime(value, "%Y-%m-%d").date()
 
@@ -256,6 +262,198 @@ def courses_page():
     teachers = Teacher.query.join(User, Teacher.user_id == User.id).order_by(User.last_name.asc()).all()
     sites = Site.query.order_by(Site.name.asc()).all()
     return render_template("courses.html", courses=courses, teachers=teachers, sites=sites)
+
+
+@main_bp.route("/employees/<int:emp_id>/edit", methods=["GET", "POST"])
+def edit_employee(emp_id):
+    employee = Employee.query.get_or_404(emp_id)
+    if request.method == "POST":
+        try:
+            employee.user.first_name = request.form.get("first_name", "").strip()
+            employee.user.last_name = request.form.get("last_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            if email != employee.user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing:
+                    flash("Cette adresse e-mail est déjà utilisée.", "warning")
+                    return redirect(url_for("main.edit_employee", emp_id=emp_id))
+                employee.user.email = email
+            hire_date = request.form.get("hire_date", "").strip()
+            if hire_date:
+                employee.hire_date = _parse_date(hire_date)
+            employee.position_id = _optional_int(request.form.get("position_id"))
+            employee.department_id = _optional_int(request.form.get("department_id"))
+            employee.civility = request.form.get("civility", "").strip() or None
+            employee.birth_name = request.form.get("birth_name", "").strip() or None
+            birth_date = request.form.get("birth_date", "").strip()
+            employee.birth_date = _parse_date(birth_date) if birth_date else None
+            employee.birth_place = request.form.get("birth_place", "").strip() or None
+            employee.nationality = request.form.get("nationality", "").strip() or None
+            employee.address = request.form.get("address", "").strip() or None
+            employee.zip_code = request.form.get("zip_code", "").strip() or None
+            employee.city = request.form.get("city", "").strip() or None
+            employee.contract_type = request.form.get("contract_type", "").strip() or None
+            trial_period_end = request.form.get("trial_period_end", "").strip()
+            employee.trial_period_end = _parse_date(trial_period_end) if trial_period_end else None
+            employee.level = request.form.get("level", "").strip() or None
+            employee.index_grade = request.form.get("index_grade", "").strip() or None
+            employee.hours_per_week = _optional_float(request.form.get("hours_per_week", "").strip())
+            employee.hours_per_month = _optional_float(request.form.get("hours_per_month", "").strip())
+            employee.hourly_rate = _optional_float(request.form.get("hourly_rate", "").strip())
+            employee.monthly_salary = _optional_float(request.form.get("monthly_salary", "").strip())
+            employee.navigo_pass = request.form.get("navigo_pass") == "1"
+            employee.pas_rate = _optional_float(request.form.get("pas_rate", "").strip())
+            db.session.commit()
+            flash("Employé mis à jour.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour. Vérifiez les données.", "danger")
+        return redirect(url_for("main.edit_employee", emp_id=emp_id))
+
+    positions = Position.query.order_by(Position.title.asc()).all()
+    departments = Department.query.order_by(Department.name.asc()).all()
+    return render_template("edit_employee.html", employee=employee, positions=positions, departments=departments)
+
+
+@main_bp.route("/employees/<int:emp_id>/delete", methods=["POST"])
+def delete_employee(emp_id):
+    employee = Employee.query.get_or_404(emp_id)
+    user = employee.user
+    for record in list(employee.salary_details) + list(employee.performance_reviews) + list(employee.leave_requests):
+        db.session.delete(record)
+    db.session.delete(employee)
+    db.session.delete(user)
+    db.session.commit()
+    flash("Employé supprimé.", "success")
+    return redirect(url_for("main.employees_page"))
+
+
+@main_bp.route("/students/<int:student_id>/edit", methods=["GET", "POST"])
+def edit_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    if request.method == "POST":
+        try:
+            student.user.first_name = request.form.get("first_name", "").strip()
+            student.user.last_name = request.form.get("last_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            if email != student.user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing:
+                    flash("Cette adresse e-mail est déjà utilisée.", "warning")
+                    return redirect(url_for("main.edit_student", student_id=student_id))
+                student.user.email = email
+            student.street = request.form.get("street", "").strip()
+            student.city = request.form.get("city", "").strip()
+            student.zip_code = request.form.get("zip_code", "").strip()
+            birth_date = request.form.get("birth_date", "").strip()
+            if birth_date:
+                student.birth_date = _parse_date(birth_date)
+            student.site_id = _optional_int(request.form.get("site_id"))
+            db.session.commit()
+            flash("Élève mis à jour.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour.", "danger")
+        return redirect(url_for("main.edit_student", student_id=student_id))
+
+    sites = Site.query.order_by(Site.name.asc()).all()
+    return render_template("edit_student.html", student=student, sites=sites)
+
+
+@main_bp.route("/students/<int:student_id>/delete", methods=["POST"])
+def delete_student(student_id):
+    student = Student.query.get_or_404(student_id)
+    user = student.user
+    for enrollment in list(student.enrollments):
+        db.session.delete(enrollment)
+    for payment in list(student.payments):
+        for installment in list(payment.installments):
+            db.session.delete(installment)
+        db.session.delete(payment)
+    db.session.delete(student)
+    db.session.delete(user)
+    db.session.commit()
+    flash("Élève supprimé.", "success")
+    return redirect(url_for("main.students_page"))
+
+
+@main_bp.route("/teachers/<int:teacher_id>/edit", methods=["GET", "POST"])
+def edit_teacher(teacher_id):
+    teacher = Teacher.query.get_or_404(teacher_id)
+    if request.method == "POST":
+        try:
+            teacher.user.first_name = request.form.get("first_name", "").strip()
+            teacher.user.last_name = request.form.get("last_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            if email != teacher.user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing:
+                    flash("Cette adresse e-mail est déjà utilisée.", "warning")
+                    return redirect(url_for("main.edit_teacher", teacher_id=teacher_id))
+                teacher.user.email = email
+            teacher.subject = request.form.get("subject", "").strip() or None
+            db.session.commit()
+            flash("Enseignant mis à jour.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour.", "danger")
+        return redirect(url_for("main.edit_teacher", teacher_id=teacher_id))
+
+    return render_template("edit_teacher.html", teacher=teacher)
+
+
+@main_bp.route("/teachers/<int:teacher_id>/delete", methods=["POST"])
+def delete_teacher(teacher_id):
+    teacher = Teacher.query.get_or_404(teacher_id)
+    if teacher.courses:
+        flash("Impossible de supprimer cet enseignant : il est affecté à des cours.", "warning")
+        return redirect(url_for("main.teachers_page"))
+    user = teacher.user
+    db.session.delete(teacher)
+    db.session.delete(user)
+    db.session.commit()
+    flash("Enseignant supprimé.", "success")
+    return redirect(url_for("main.teachers_page"))
+
+
+@main_bp.route("/courses/<int:course_id>/edit", methods=["GET", "POST"])
+def edit_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    if request.method == "POST":
+        try:
+            course.title = request.form.get("title", "").strip()
+            teacher_id = _optional_int(request.form.get("teacher_id"))
+            if not teacher_id:
+                flash("L'enseignant est obligatoire.", "warning")
+                return redirect(url_for("main.edit_course", course_id=course_id))
+            course.teacher_id = teacher_id
+            course.site_id = _optional_int(request.form.get("site_id"))
+            course.level = request.form.get("level", "").strip() or None
+            course.day = request.form.get("day", "").strip() or None
+            course.time_slot = request.form.get("time_slot", "").strip() or None
+            course.start_hour = _optional_int(request.form.get("start_hour"))
+            course.end_hour = _optional_int(request.form.get("end_hour"))
+            db.session.commit()
+            flash("Cours mis à jour.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour. Vérifiez les contraintes horaires.", "danger")
+        return redirect(url_for("main.edit_course", course_id=course_id))
+
+    teachers = Teacher.query.join(User, Teacher.user_id == User.id).order_by(User.last_name.asc()).all()
+    sites = Site.query.order_by(Site.name.asc()).all()
+    return render_template("edit_course.html", course=course, teachers=teachers, sites=sites)
+
+
+@main_bp.route("/courses/<int:course_id>/delete", methods=["POST"])
+def delete_course(course_id):
+    course = Course.query.get_or_404(course_id)
+    for enrollment in list(course.enrollments):
+        db.session.delete(enrollment)
+    db.session.delete(course)
+    db.session.commit()
+    flash("Cours supprimé.", "success")
+    return redirect(url_for("main.courses_page"))
 
 
 @main_bp.route("/admin/bootstrap", methods=["POST"])

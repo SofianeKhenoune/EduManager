@@ -1,0 +1,88 @@
+{% extends "base.html" %} {% block title %}Modifier le cours | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>{{ course.title }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.courses_page') }}">Retour</a>
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Titre *
+      <input type="text" name="title" value="{{ course.title }}" required />
+    </label>
+    <label>
+      Enseignant *
+      <select name="teacher_id" required>
+        <option value="">Sélectionner</option>
+        {% for teacher in teachers %}
+        <option value="{{ teacher.id }}" {% if course.teacher_id == teacher.id %}selected{% endif %}>
+          {{ teacher.user.first_name }} {{ teacher.user.last_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Site
+      <select name="site_id">
+        <option value="">Aucun</option>
+        {% for site in sites %}
+        <option value="{{ site.id }}" {% if course.site_id == site.id %}selected{% endif %}>
+          {{ site.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Niveau
+      <select name="level">
+        <option value="">Aucun</option>
+        {% for lvl in ['PREPA','NIV1','NIV2','NIV3','NIV4','NIV5','NIV6','NIV7'] %}
+        <option {% if course.level == lvl %}selected{% endif %}>{{ lvl }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Jour
+      <select name="day">
+        <option value="">Aucun</option>
+        {% for d in ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'] %}
+        <option {% if course.day == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Créneau
+      <select name="time_slot">
+        <option value="">Aucun</option>
+        <option {% if course.time_slot == 'matin' %}selected{% endif %}>matin</option>
+        <option {% if course.time_slot == 'après-midi' %}selected{% endif %}>après-midi</option>
+      </select>
+    </label>
+    <label>
+      Heure de début
+      <input type="number" min="0" max="23" name="start_hour" value="{{ course.start_hour if course.start_hour is not none else '' }}" />
+    </label>
+    <label>
+      Heure de fin
+      <input type="number" min="0" max="23" name="end_hour" value="{{ course.end_hour if course.end_hour is not none else '' }}" />
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Supprimer ce cours</h2>
+  {% if course.enrollments %}
+  <p style="color: var(--ink-soft);">{{ course.enrollments|length }} inscription(s) seront aussi supprimées.</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('main.delete_course', course_id=course.id) }}"
+        onsubmit="return confirm('Supprimer définitivement ce cours ?')">
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Supprimer le cours</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

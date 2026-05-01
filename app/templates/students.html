@@ -66,6 +66,7 @@ block content %}
           <th>Email</th>
           <th>Ville</th>
           <th>Site</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -75,10 +76,13 @@ block content %}
           <td>{{ student.user.email }}</td>
           <td>{{ student.city }}</td>
           <td>{{ student.site.name if student.site else '-' }}</td>
+          <td>
+            <a class="btn btn-secondary" href="{{ url_for('main.edit_student', student_id=student.id) }}">Modifier</a>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="4">Aucun élève pour le moment.</td>
+          <td colspan="5">Aucun élève pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>

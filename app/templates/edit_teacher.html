@@ -1,0 +1,45 @@
+{% extends "base.html" %} {% block title %}Modifier l'enseignant | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>{{ teacher.user.first_name }} {{ teacher.user.last_name }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.teachers_page') }}">Retour</a>
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Prénom *
+      <input type="text" name="first_name" value="{{ teacher.user.first_name }}" required />
+    </label>
+    <label>
+      Nom *
+      <input type="text" name="last_name" value="{{ teacher.user.last_name }}" required />
+    </label>
+    <label>
+      Email *
+      <input type="email" name="email" value="{{ teacher.user.email }}" required />
+    </label>
+    <label>
+      Matière
+      <input type="text" name="subject" value="{{ teacher.subject or '' }}" placeholder="Mathématiques" />
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Supprimer cet enseignant</h2>
+  {% if teacher.courses %}
+  <p style="color: var(--ink-soft);">Cet enseignant est affecté à {{ teacher.courses|length }} cours. Retirez-le des cours avant de le supprimer.</p>
+  {% else %}
+  <form method="post" action="{{ url_for('main.delete_teacher', teacher_id=teacher.id) }}"
+        onsubmit="return confirm('Supprimer définitivement cet enseignant ?')">
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Supprimer l'enseignant</button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

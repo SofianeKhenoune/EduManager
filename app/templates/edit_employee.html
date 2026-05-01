@@ -1,0 +1,158 @@
+{% extends "base.html" %} {% block title %}Modifier l'employé | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>{{ employee.user.first_name }} {{ employee.user.last_name }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.employees_page') }}">Retour</a>
+  </div>
+
+  <form method="post" class="form-grid">
+    <h2 class="form-section-title">Identité</h2>
+
+    <label>
+      Civilité
+      <select name="civility">
+        <option value="">-</option>
+        <option {% if employee.civility == 'M.' %}selected{% endif %}>M.</option>
+        <option {% if employee.civility == 'Mme' %}selected{% endif %}>Mme</option>
+      </select>
+    </label>
+    <label>
+      Prénom *
+      <input type="text" name="first_name" value="{{ employee.user.first_name }}" required />
+    </label>
+    <label>
+      Nom *
+      <input type="text" name="last_name" value="{{ employee.user.last_name }}" required />
+    </label>
+    <label>
+      Nom de naissance
+      <input type="text" name="birth_name" value="{{ employee.birth_name or '' }}" />
+    </label>
+    <label>
+      Date de naissance
+      <input type="date" name="birth_date" value="{{ employee.birth_date.isoformat() if employee.birth_date else '' }}" />
+    </label>
+    <label>
+      Lieu de naissance
+      <input type="text" name="birth_place" value="{{ employee.birth_place or '' }}" />
+    </label>
+    <label>
+      Nationalité
+      <input type="text" name="nationality" value="{{ employee.nationality or '' }}" />
+    </label>
+
+    <h2 class="form-section-title">Contact</h2>
+
+    <label>
+      Email *
+      <input type="email" name="email" value="{{ employee.user.email }}" required />
+    </label>
+    <label>
+      Adresse
+      <input type="text" name="address" value="{{ employee.address or '' }}" />
+    </label>
+    <label>
+      Code postal
+      <input type="text" name="zip_code" value="{{ employee.zip_code or '' }}" />
+    </label>
+    <label>
+      Ville
+      <input type="text" name="city" value="{{ employee.city or '' }}" />
+    </label>
+
+    <h2 class="form-section-title">Contrat</h2>
+
+    <label>
+      Matricule
+      <input type="text" value="{{ employee.employee_id }}" disabled />
+    </label>
+    <label>
+      Date d'embauche *
+      <input type="date" name="hire_date" value="{{ employee.hire_date.isoformat() if employee.hire_date else '' }}" required />
+    </label>
+    <label>
+      Type de contrat
+      <input type="text" name="contract_type" value="{{ employee.contract_type or '' }}" placeholder="CDI, CDD…" />
+    </label>
+    <label>
+      Fin de période d'essai
+      <input type="date" name="trial_period_end" value="{{ employee.trial_period_end.isoformat() if employee.trial_period_end else '' }}" />
+    </label>
+    <label>
+      Position
+      <select name="position_id">
+        <option value="">Aucune</option>
+        {% for position in positions %}
+        <option value="{{ position.id }}" {% if employee.position_id == position.id %}selected{% endif %}>
+          {{ position.title }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Département
+      <select name="department_id">
+        <option value="">Aucun</option>
+        {% for department in departments %}
+        <option value="{{ department.id }}" {% if employee.department_id == department.id %}selected{% endif %}>
+          {{ department.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Niveau
+      <input type="text" name="level" value="{{ employee.level or '' }}" />
+    </label>
+    <label>
+      Indice / Échelon
+      <input type="text" name="index_grade" value="{{ employee.index_grade or '' }}" />
+    </label>
+
+    <h2 class="form-section-title">Rémunération</h2>
+
+    <label>
+      Heures / semaine
+      <input type="number" step="0.01" name="hours_per_week" value="{{ employee.hours_per_week or '' }}" />
+    </label>
+    <label>
+      Heures / mois
+      <input type="number" step="0.01" name="hours_per_month" value="{{ employee.hours_per_month or '' }}" />
+    </label>
+    <label>
+      Taux horaire (€)
+      <input type="number" step="0.01" name="hourly_rate" value="{{ employee.hourly_rate or '' }}" />
+    </label>
+    <label>
+      Salaire mensuel brut (€)
+      <input type="number" step="0.01" name="monthly_salary" value="{{ employee.monthly_salary or '' }}" />
+    </label>
+    <label>
+      Taux PAS (%)
+      <input type="number" step="0.01" name="pas_rate" value="{{ employee.pas_rate or '' }}" />
+    </label>
+    <label>
+      Navigo
+      <select name="navigo_pass">
+        <option value="0" {% if not employee.navigo_pass %}selected{% endif %}>Non</option>
+        <option value="1" {% if employee.navigo_pass %}selected{% endif %}>Oui</option>
+      </select>
+    </label>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Supprimer cet employé</h2>
+  <form method="post" action="{{ url_for('main.delete_employee', emp_id=employee.id) }}"
+        onsubmit="return confirm('Supprimer définitivement cet employé ?')">
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Supprimer l'employé</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

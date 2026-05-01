@@ -46,6 +46,7 @@
           <th>Nom</th>
           <th>Email</th>
           <th>Matière</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -54,10 +55,13 @@
           <td>{{ teacher.user.first_name }} {{ teacher.user.last_name }}</td>
           <td>{{ teacher.user.email }}</td>
           <td>{{ teacher.subject or '-' }}</td>
+          <td>
+            <a class="btn btn-secondary" href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}">Modifier</a>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="3">Aucun enseignant pour le moment.</td>
+          <td colspan="4">Aucun enseignant pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>
