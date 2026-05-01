@@ -4,13 +4,13 @@
   <div class="section-head">
     <h1>Enseignants</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
-      >Retour dashboard</a
+      >Retour au tableau de bord</a
     >
   </div>
 
   <form method="post" class="form-grid">
     <label>
-      Prenom *
+      Prénom *
       <input type="text" name="first_name" required />
     </label>
     <label>
@@ -26,11 +26,13 @@
       <input type="password" name="password" required />
     </label>
     <label>
-      Matiere
-      <input type="text" name="subject" placeholder="Mathematiques" />
+      Matière
+      <input type="text" name="subject" placeholder="Mathématiques" />
     </label>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Ajouter enseignant</button>
+      <button class="btn btn-primary" type="submit">
+        Ajouter un enseignant
+      </button>
     </div>
   </form>
 </section>
@@ -43,7 +45,7 @@
         <tr>
           <th>Nom</th>
           <th>Email</th>
-          <th>Matiere</th>
+          <th>Matière</th>
         </tr>
       </thead>
       <tbody>

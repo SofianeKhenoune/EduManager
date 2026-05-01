@@ -9,6 +9,8 @@ services:
     environment:
       - FLASK_APP=app:create_app
       - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - TEMPLATES_AUTO_RELOAD=true
       - POSTGRES_DB=EduManager
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password

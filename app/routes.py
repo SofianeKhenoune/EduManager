@@ -39,7 +39,7 @@ def _ensure_role_id(role_name: str) -> int:
 def _create_user(first_name: str, last_name: str, email: str, password: str, role_name: str):
     existing = User.query.filter_by(email=email).first()
     if existing is not None:
-        return None, "Un utilisateur avec cet email existe deja."
+        return None, "Un utilisateur avec cette adresse e-mail existe déjà."
 
     role_id = _ensure_role_id(role_name)
     user = User(
@@ -86,7 +86,7 @@ def students_page():
             site_id = _optional_int(request.form.get("site_id"))
 
             if not all([first_name, last_name, email, password, street, city, zip_code, birth_date]):
-                flash("Tous les champs obligatoires eleve doivent etre renseignes.", "warning")
+                flash("Tous les champs obligatoires de l'élève doivent être renseignés.", "warning")
                 return redirect(url_for("main.students_page"))
 
             user, error = _create_user(first_name, last_name, email, password, "student")
@@ -106,10 +106,10 @@ def students_page():
             )
             db.session.add(student)
             db.session.commit()
-            flash("Eleve ajoute avec succes.", "success")
+            flash("Élève ajouté avec succès.", "success")
         except (ValueError, IntegrityError):
             db.session.rollback()
-            flash("Impossible d'ajouter l'eleve. Verifie les donnees saisies.", "danger")
+            flash("Impossible d'ajouter l'élève. Vérifiez les données saisies.", "danger")
 
         return redirect(url_for("main.students_page"))
 
@@ -129,7 +129,7 @@ def teachers_page():
             subject = request.form.get("subject", "").strip()
 
             if not all([first_name, last_name, email, password]):
-                flash("Les champs prenom, nom, email et mot de passe sont obligatoires.", "warning")
+                flash("Les champs prénom, nom, adresse e-mail et mot de passe sont obligatoires.", "warning")
                 return redirect(url_for("main.teachers_page"))
 
             user, error = _create_user(first_name, last_name, email, password, "teacher")
@@ -141,7 +141,7 @@ def teachers_page():
             teacher = Teacher(user_id=user.id, subject=subject or None)
             db.session.add(teacher)
             db.session.commit()
-            flash("Enseignant ajoute avec succes.", "success")
+            flash("Enseignant ajouté avec succès.", "success")
         except (ValueError, IntegrityError):
             db.session.rollback()
             flash("Impossible d'ajouter l'enseignant.", "danger")
@@ -166,7 +166,7 @@ def employees_page():
             department_id = _optional_int(request.form.get("department_id"))
 
             if not all([first_name, last_name, email, password, hire_date, employee_code]):
-                flash("Champs obligatoires employe manquants.", "warning")
+                flash("Des champs obligatoires de l'employé sont manquants.", "warning")
                 return redirect(url_for("main.employees_page"))
 
             user, error = _create_user(first_name, last_name, email, password, "staff")
@@ -184,10 +184,10 @@ def employees_page():
             )
             db.session.add(employee)
             db.session.commit()
-            flash("Employe ajoute avec succes.", "success")
+            flash("Employé ajouté avec succès.", "success")
         except (ValueError, IntegrityError):
             db.session.rollback()
-            flash("Impossible d'ajouter l'employe. Verifie employee code/date.", "danger")
+            flash("Impossible d'ajouter l'employé. Vérifiez le matricule et la date d'embauche.", "danger")
 
         return redirect(url_for("main.employees_page"))
 
@@ -231,10 +231,10 @@ def courses_page():
             )
             db.session.add(course)
             db.session.commit()
-            flash("Cours ajoute avec succes.", "success")
+            flash("Cours ajouté avec succès.", "success")
         except (ValueError, IntegrityError):
             db.session.rollback()
-            flash("Impossible d'ajouter le cours. Verifie les contraintes horaires.", "danger")
+            flash("Impossible d'ajouter le cours. Vérifiez les contraintes horaires.", "danger")
 
         return redirect(url_for("main.courses_page"))
 

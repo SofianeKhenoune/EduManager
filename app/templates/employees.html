@@ -1,16 +1,16 @@
-{% extends "base.html" %} {% block title %}Employes | EduManager{% endblock %}
+{% extends "base.html" %} {% block title %}Employés | EduManager{% endblock %}
 {% block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>Employes</h1>
+    <h1>Employés</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
-      >Retour dashboard</a
+      >Retour au tableau de bord</a
     >
   </div>
 
   <form method="post" class="form-grid">
     <label>
-      Prenom *
+      Prénom *
       <input type="text" name="first_name" required />
     </label>
     <label>
@@ -26,11 +26,11 @@
       <input type="password" name="password" required />
     </label>
     <label>
-      Date embauche *
+      Date d'embauche *
       <input type="date" name="hire_date" required />
     </label>
     <label>
-      Code employe *
+      Matricule *
       <input type="text" name="employee_code" required />
     </label>
     <label>
@@ -43,7 +43,7 @@
       </select>
     </label>
     <label>
-      Departement
+      Département
       <select name="department_id">
         <option value="">Aucun</option>
         {% for department in departments %}
@@ -52,13 +52,13 @@
       </select>
     </label>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Ajouter employe</button>
+      <button class="btn btn-primary" type="submit">Ajouter un employé</button>
     </div>
   </form>
 </section>
 
 <section class="panel section-block">
-  <h2>Liste des employes</h2>
+  <h2>Liste des employés</h2>
   <div class="table-wrap">
     <table>
       <thead>
@@ -66,7 +66,7 @@
           <th>Nom</th>
           <th>Email</th>
           <th>Code</th>
-          <th>Departement</th>
+          <th>Département</th>
         </tr>
       </thead>
       <tbody>
@@ -81,7 +81,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="4">Aucun employe pour le moment.</td>
+          <td colspan="4">Aucun employé pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -11,14 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .then((payload) => {
         if (payload.status === 'ok') {
-          chip.textContent = 'Backend: en ligne';
+          chip.textContent = 'Backend : en ligne';
           chip.classList.add('ok');
         } else {
-          chip.textContent = 'Backend: etat inconnu';
+          chip.textContent = 'Backend : état inconnu';
         }
       })
       .catch(() => {
-        chip.textContent = 'Backend: indisponible';
+        chip.textContent = 'Backend : indisponible';
         chip.classList.remove('ok');
       });
   }

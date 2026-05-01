@@ -2,33 +2,36 @@
 block content %}
 <section class="hero">
   <article class="panel hero-copy reveal">
-    <div class="eyebrow">Plateforme Education</div>
-    <h1>Pilote ton ecole avec une vue claire et concrete.</h1>
+    <div class="eyebrow">Plateforme éducative</div>
+    <h1>Pilotez votre école avec une vue claire et concrète.</h1>
     <p>
-      Ce front pose une base solide pour l'administration: gestion eleves,
-      cours, personnel, inscriptions et operations quotidiennes. Le design est
-      responsif et le statut backend est verifie en direct.
+      Cette interface pose une base solide pour l'administration : gestion des
+      élèves, des cours, du personnel, des inscriptions et des opérations
+      quotidiennes. Le design est responsif et l'état du backend est vérifié en
+      direct.
     </p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="{{ url_for('main.students_page') }}"
         >Ouvrir les modules</a
       >
-      <a class="btn btn-secondary" href="#bootstrap">Configurer l'admin</a>
+      <a class="btn btn-secondary" href="#bootstrap"
+        >Configurer l'administrateur</a
+      >
     </div>
   </article>
 
   <aside class="panel hero-side reveal delay-1" id="bootstrap">
     <div class="stat-box">
-      <div class="stat-label">Etat API</div>
+      <div class="stat-label">État de l'API</div>
       <div class="stat-value">/health</div>
-      <span class="health-chip" data-health-chip>Verification...</span>
+      <span class="health-chip" data-health-chip>Vérification…</span>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Mode operationnel</div>
-      <div class="stat-value">Backend + DB</div>
+      <div class="stat-label">Mode opérationnel</div>
+      <div class="stat-value">Backend + base de données</div>
     </div>
     <div class="stat-box">
-      <div class="stat-label">Eleves actifs</div>
+      <div class="stat-label">Élèves actifs</div>
       <div class="stat-value" data-kpi="students">0</div>
     </div>
     <div class="stat-box">
@@ -40,43 +43,46 @@ block content %}
 
 <section class="grid" id="modules">
   <article class="card reveal delay-1">
-    <h3>Gestion des Utilisateurs</h3>
-    <p>Roles, comptes admin, enseignants, eleves et personnel centralises.</p>
+    <h3>Gestion des utilisateurs</h3>
+    <p>
+      Rôles, comptes administrateurs, enseignants, élèves et personnel
+      centralisés.
+    </p>
     <p class="card-link-row">
-      <a href="{{ url_for('main.students_page') }}">Gerer les eleves</a>
+      <a href="{{ url_for('main.students_page') }}">Gérer les élèves</a>
     </p>
   </article>
   <article class="card reveal delay-2">
-    <h3>Planning des Cours</h3>
+    <h3>Planning des cours</h3>
     <p>Organisation par site, niveau, plage horaire et enseignant.</p>
     <p class="card-link-row">
-      <a href="{{ url_for('main.courses_page') }}">Gerer les cours</a>
+      <a href="{{ url_for('main.courses_page') }}">Gérer les cours</a>
     </p>
   </article>
   <article class="card reveal delay-3">
-    <h3>Inscriptions et Paiements</h3>
-    <p>Inscriptions uniques par cours, paiements et echeanciers.</p>
+    <h3>Inscriptions et paiements</h3>
+    <p>Inscriptions uniques par cours, paiements et échéanciers.</p>
     <p class="card-link-row">
-      <a href="{{ url_for('main.teachers_page') }}">Voir enseignants</a>
+      <a href="{{ url_for('main.teachers_page') }}">Voir les enseignants</a>
     </p>
   </article>
 </section>
 
 <section class="panel timeline reveal delay-2" id="planning">
-  <h2>Plan de Livraison Front</h2>
+  <h2>Plan de livraison du front</h2>
   <ol class="timeline-list">
     <li class="timeline-item">
-      <span class="timeline-time">Etape 1</span>
-      <div>Pages liste: eleves, enseignants, cours, employes.</div>
+      <span class="timeline-time">Étape 1</span>
+      <div>Pages de liste : élèves, enseignants, cours et employés.</div>
     </li>
     <li class="timeline-item">
-      <span class="timeline-time">Etape 2</span>
-      <div>Formulaires CRUD avec validation de contraintes metier.</div>
+      <span class="timeline-time">Étape 2</span>
+      <div>Formulaires CRUD avec validation des contraintes métier.</div>
     </li>
     <li class="timeline-item">
-      <span class="timeline-time">Etape 3</span>
+      <span class="timeline-time">Étape 3</span>
       <div>
-        Tableau de bord KPI: inscriptions actives, paiements, charges RH.
+        Tableau de bord KPI : inscriptions actives, paiements, charges RH.
       </div>
     </li>
   </ol>

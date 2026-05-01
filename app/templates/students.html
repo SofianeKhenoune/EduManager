@@ -1,16 +1,16 @@
-{% extends "base.html" %} {% block title %}Eleves | EduManager{% endblock %} {%
+{% extends "base.html" %} {% block title %}Élèves | EduManager{% endblock %} {%
 block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>Eleves</h1>
+    <h1>Élèves</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
-      >Retour dashboard</a
+      >Retour au tableau de bord</a
     >
   </div>
 
   <form method="post" class="form-grid">
     <label>
-      Prenom *
+      Prénom *
       <input type="text" name="first_name" required />
     </label>
     <label>
@@ -51,13 +51,13 @@ block content %}
       </select>
     </label>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Ajouter eleve</button>
+      <button class="btn btn-primary" type="submit">Ajouter un élève</button>
     </div>
   </form>
 </section>
 
 <section class="panel section-block">
-  <h2>Liste des eleves</h2>
+  <h2>Liste des élèves</h2>
   <div class="table-wrap">
     <table>
       <thead>
@@ -78,7 +78,7 @@ block content %}
         </tr>
         {% else %}
         <tr>
-          <td colspan="4">Aucun eleve pour le moment.</td>
+          <td colspan="4">Aucun élève pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>

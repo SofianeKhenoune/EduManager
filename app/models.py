@@ -207,6 +207,31 @@ class Employee(db.Model):
     contract_end_date = db.Column(db.Date)
     position_id = db.Column(db.Integer, db.ForeignKey("positions.id"))
     department_id = db.Column(db.Integer, db.ForeignKey("departments.id"))
+    # Personal information
+    birth_name = db.Column(db.Text)
+    birth_date = db.Column(db.Date)
+    birth_place = db.Column(db.Text)
+    nationality = db.Column(db.Text)
+    civility = db.Column(db.Text)
+    # Address
+    address = db.Column(db.Text)
+    zip_code = db.Column(db.Text)
+    city = db.Column(db.Text)
+    # Contract information
+    contract_type = db.Column(db.Text)
+    trial_period_end = db.Column(db.Date)
+    contract_duration = db.Column(db.Integer)
+    # Position details
+    level = db.Column(db.Text)
+    index_grade = db.Column(db.Text)
+    # Hours and salary
+    hours_per_week = db.Column(db.Float)
+    hours_per_month = db.Column(db.Float)
+    hourly_rate = db.Column(db.Float)
+    monthly_salary = db.Column(db.Float)
+    # Benefits
+    navigo_pass = db.Column(db.Boolean, default=False)
+    pas_rate = db.Column(db.Float)
 
     user = db.relationship("User", back_populates="employee")
     position = db.relationship("Position", back_populates="employees")

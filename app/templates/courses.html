@@ -4,7 +4,7 @@ block content %}
   <div class="section-head">
     <h1>Cours</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
-      >Retour dashboard</a
+      >Retour au tableau de bord</a
     >
   </div>
 
@@ -16,7 +16,7 @@ block content %}
     <label>
       Enseignant *
       <select name="teacher_id" required>
-        <option value="">Selectionner</option>
+        <option value="">Sélectionner</option>
         {% for teacher in teachers %}
         <option value="{{ teacher.id }}">
           {{ teacher.user.first_name }} {{ teacher.user.last_name }}
@@ -61,7 +61,7 @@ block content %}
       </select>
     </label>
     <label>
-      Creneau
+      Créneau
       <select name="time_slot">
         <option value="">Aucun</option>
         <option>matin</option>
@@ -69,15 +69,15 @@ block content %}
       </select>
     </label>
     <label>
-      Heure debut
+      Heure de début
       <input type="number" min="0" max="23" name="start_hour" />
     </label>
     <label>
-      Heure fin
+      Heure de fin
       <input type="number" min="0" max="23" name="end_hour" />
     </label>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Ajouter cours</button>
+      <button class="btn btn-primary" type="submit">Ajouter un cours</button>
     </div>
   </form>
 </section>
@@ -91,7 +91,7 @@ block content %}
           <th>Titre</th>
           <th>Enseignant</th>
           <th>Jour</th>
-          <th>Creneau</th>
+          <th>Créneau</th>
           <th>Heures</th>
         </tr>
       </thead>
