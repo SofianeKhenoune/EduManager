@@ -144,7 +144,18 @@ endblock %} {% block content %}
       <select name="position_id">
         <option value="">Aucune</option>
         {% for position in positions %}
-        <option value="{{ position.id }}" {% if employee.position_id == position.id %}selected{% endif %}>{{ position.title }}</option>
+        <option
+          value="{{ position.id }}"
+          {%
+          if
+          employee.position_id=""
+          ="position.id"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ position.title }}
+        </option>
         {% endfor %}
       </select>
     </label>
@@ -153,7 +164,18 @@ endblock %} {% block content %}
       <select name="department_id">
         <option value="">Aucun</option>
         {% for department in departments %}
-        <option value="{{ department.id }}" {% if employee.department_id == department.id %}selected{% endif %}>{{ department.name }}</option>
+        <option
+          value="{{ department.id }}"
+          {%
+          if
+          employee.department_id=""
+          ="department.id"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ department.name }}
+        </option>
         {% endfor %}
       </select>
     </label>
