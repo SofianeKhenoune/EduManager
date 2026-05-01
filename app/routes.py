@@ -169,9 +169,9 @@ def employees_page():
                 flash("Des champs obligatoires de l'employé sont manquants.", "warning")
                 return redirect(url_for("main.employees_page"))
             
-            # Valider le format du matricule (5 chiffres)
-            if not employee_code.isdigit() or len(employee_code) != 5:
-                flash("Le matricule doit contenir exactement 5 chiffres.", "warning")
+            # Valider le format du matricule (nombre entier)
+            if not employee_code.isdigit():
+                flash("Le matricule doit être un nombre entier.", "warning")
                 return redirect(url_for("main.employees_page"))
             
             # Vérifier l'unicité du matricule

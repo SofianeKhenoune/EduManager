@@ -16,13 +16,12 @@ def import_employees_from_excel(excel_path: str) -> dict:
     """
     Importe les employés depuis un fichier Excel.
     
-    Colonnes attendues :
-    - Civilité, Nom, Nom de naissance, Prénom, Adresse, CP, Ville
+    Structure réelle du fichier (colonne 0 = Matricule) :
+    - Matricule, Civilité, Nom, Nom de naissance, Prénom, Adresse, CP, Ville
     - Date de naissance, Ville et Pays de naissance, Nationalité, N° de SS
     - TYPE DE CONTRAT, Embauche, Période d'Essai, Fin de contrat, Durée contrat
     - Poste, Niveau, Indice, Nb h/semaine, Nb h/mois
     - Salaire horaire, Salaire mensuel Brut, Navigo, Taux PAS
-    - Matricule (5 chiffres - OBLIGATOIRE) ← À ajouter comme dernière colonne
     
     :param excel_path: Chemin du fichier Excel
     :return: Dictionnaire avec nombre d'employés importés et erreurs
@@ -62,34 +61,36 @@ def import_employees_from_excel(excel_path: str) -> dict:
         
         for row_idx, row in enumerate(rows_data, start=2):
             try:
-                # Extraction des colonnes
-                civility = row[0]
-                last_name = row[1]
-                birth_name = row[2]
-                first_name = row[3]
-                address = row[4]
-                zip_code = row[5]
-                city = row[6]
-                birth_date_val = row[7]
-                birth_place = row[8]
-                nationality = row[9]
-                social_security = row[10]
-                contract_type = row[11]
-                hire_date_val = row[12]
-                trial_period_val = row[13]
-                contract_end_val = row[14]
-                contract_duration = row[15]
-                position_title = row[16]
-                level = row[17]
-                index_grade = row[18]
-                hours_per_week = row[19]
-                hours_per_month = row[20]
-                hourly_rate = row[21]
-                monthly_salary = row[22]
-                navigo_str = row[23]
-                pas_rate = row[24]
-                # Matricule à 5 chiffres
-                matricule = str(row[25]).strip() if len(row) > 25 else None
+                # Extraction des colonnes (Matricule en col 0)
+                matricule_raw = row[0]
+                civility = row[1]
+                last_name = row[2]
+                birth_name = row[3]
+                first_name = row[4]
+                address = row[5]
+                zip_code = str(row[6]).strip() if row[6] else None
+                city = row[7]
+                birth_date_val = row[8]
+                birth_place = row[9]
+                nationality = row[10]
+                social_security = str(row[11]).strip() if row[11] else None
+                contract_type = row[12]
+                hire_date_val = row[13]
+                trial_period_val = row[14]
+                contract_end_val = row[15]
+                contract_duration = row[16]
+                position_title = row[17]
+                level = row[18]
+                index_grade = str(row[19]).strip() if row[19] else None
+                hours_per_week = row[20]
+                hours_per_month = row[21]
+                hourly_rate = row[22]
+                monthly_salary = row[23]
+                navigo_str = row[24]
+                pas_rate = row[25] if len(row) > 25 else None
+                
+                # Convertir matricule en chaîne (peut être entier Excel)
+                matricule = str(int(matricule_raw)).strip() if matricule_raw is not None else None
                 
                 # Validation minimale
                 if not first_name or not last_name:
@@ -98,8 +99,8 @@ def import_employees_from_excel(excel_path: str) -> dict:
                     continue
                 
                 # Valider le matricule
-                if not matricule or not matricule.isdigit() or len(matricule) != 5:
-                    results["errors"].append(f"Ligne {row_idx} ({first_name} {last_name}): Matricule invalide (doit être 5 chiffres)")
+                if not matricule:
+                    results["errors"].append(f"Ligne {row_idx} ({first_name} {last_name}): Matricule manquant")
                     results["skipped"] += 1
                     continue
                 
