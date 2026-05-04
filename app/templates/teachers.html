@@ -1,11 +1,13 @@
-{% extends "base.html" %} {% block title %}Enseignants | EduManager{% endblock
-%} {% block content %}
+{% extends "base.html" %} {% block title %}Enseignants | EduManager{% endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>Enseignants</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
       >Retour au tableau de bord</a
     >
+  </div>
+  <div class="section-actions-row">
+    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -42,12 +44,7 @@
   <div class="table-wrap">
     <table>
       <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Email</th>
-          <th>Matière</th>
-          <th></th>
-        </tr>
+        <tr><th>Nom</th><th>Email</th><th>Matiere</th><th>Cours</th><th></th></tr>
       </thead>
       <tbody>
         {% for teacher in teachers %}
@@ -55,21 +52,15 @@
           <td>{{ teacher.user.first_name }} {{ teacher.user.last_name }}</td>
           <td>{{ teacher.user.email }}</td>
           <td>{{ teacher.subject or '-' }}</td>
-          <td>
-            <a
-              class="btn btn-secondary"
-              href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}"
-              >Modifier</a
-            >
-          </td>
+          <td>{{ teacher.courses | length }}</td>
+          <td><a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}">Modifier</a></td>
         </tr>
         {% else %}
-        <tr>
-          <td colspan="4">Aucun enseignant pour le moment.</td>
-        </tr>
+        <tr><td colspan="5">Aucun enseignant pour le moment.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% set pagination = teachers_pagination %}{% set endpoint_name = 'main.teachers_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

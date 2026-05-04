@@ -1,0 +1,134 @@
+{% extends "base.html" %} {% block title %}Paiement – {{ payment.family.display_name if payment.family else 'Detail' }} | EduManager{% endblock %} {% block content %}
+
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Paiement — {{ payment.family.display_name if payment.family else '—' }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.payments_page') }}">Retour aux paiements</a>
+  </div>
+
+  <dl class="detail-grid">
+    <div>
+      <dt>Montant total</dt>
+      <dd>{{ "%.2f"|format(payment.total_amount) }} €</dd>
+    </div>
+    <div>
+      <dt>Date</dt>
+      <dd>{{ payment.payment_date.strftime('%d/%m/%Y') if payment.payment_date else '—' }}</dd>
+    </div>
+    <div>
+      <dt>Moyen</dt>
+      <dd>
+        {% if payment.method == 'CB' %}Carte bancaire
+        {% elif payment.method == 'ESP' %}Espèces
+        {% elif payment.method == 'CHQ' %}Chèque
+        {% else %}—{% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt>Deja regle</dt>
+      <dd class="{% if payment.remaining_amount <= 0 %}paid-full{% elif payment.installments_total > 0 %}paid-partial{% else %}paid-none{% endif %}">
+        {{ "%.2f"|format(payment.installments_total) }} € / {{ "%.2f"|format(payment.total_amount) }} €
+      </dd>
+    </div>
+    <div>
+      <dt>Restant dû</dt>
+      <dd>{{ "%.2f"|format(payment.remaining_amount) }} €</dd>
+    </div>
+  </dl>
+
+  <div class="section-actions-row">
+    <a class="btn btn-secondary" href="{{ url_for('main.payment_receipt_pdf', payment_id=payment.id) }}">Télécharger le reçu PDF</a>
+  </div>
+
+  {% if payment.remaining_amount %}
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" style="width: {{ payment.progress_percent }}%"></div>
+  </div>
+  {% else %}
+  <div class="badge-paid">Soldé ✓</div>
+  {% endif %}
+</section>
+
+{% if can_access('admin', 'staff', 'manager') %}
+<section class="panel section-block">
+  <h2>Ajouter une échéance</h2>
+  <form method="post" action="{{ url_for('main.add_installment', payment_id=payment.id) }}" class="form-grid">
+    <label>
+      N° échéance *
+      <input type="number" name="installment_number" min="1" value="{{ (payment.installments | length) + 1 }}" required />
+    </label>
+    <label>
+      Montant (€) *
+      <input type="number" name="amount" min="0" step="0.01"
+        {% if payment.remaining_amount > 0 %}value="{{ '%.2f'|format(payment.remaining_amount) }}"{% endif %}
+        required />
+    </label>
+    <label>
+      Date
+      <input type="date" name="payment_date" value="{{ today }}" />
+    </label>
+    <label>
+      Moyen
+      <select name="method">
+        <option value="">— Non précisé —</option>
+        <option value="CB">Carte bancaire</option>
+        <option value="ESP">Espèces</option>
+        <option value="CHQ">Chèque</option>
+      </select>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Ajouter l'échéance</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel section-block">
+  <h2>Échéances</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Montant</th>
+          <th>Date</th>
+          <th>Moyen</th>
+          {% if can_access('admin', 'staff', 'manager') %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for inst in payment.installments | sort(attribute='installment_number') %}
+        <tr>
+          <td>{{ inst.installment_number }}</td>
+          <td>
+            {{ "%.2f"|format(inst.amount) }} €
+          </td>
+          <td>{{ inst.payment_date.strftime('%d/%m/%Y') if inst.payment_date else '—' }}</td>
+          <td>{% if inst.method == 'CB' %}Carte bancaire{% elif inst.method == 'ESP' %}Espèces{% elif inst.method == 'CHQ' %}Chèque{% else %}Prévision{% endif %}</td>
+          {% if can_access('admin', 'staff', 'manager') %}
+          <td class="td-actions">
+            <form method="post" action="{{ url_for('main.edit_installment', payment_id=payment.id, installment_id=inst.id) }}" class="form-inline-row">
+              <input type="number" name="amount" min="0" step="0.01" value="{{ '%.2f'|format(inst.amount) }}" required />
+              <input type="date" name="payment_date" value="{{ inst.payment_date.isoformat() if inst.payment_date else '' }}" />
+              <select name="method">
+                <option value="" {% if not inst.method %}selected{% endif %}>Prévision</option>
+                <option value="CB" {% if inst.method == 'CB' %}selected{% endif %}>Carte bancaire</option>
+                <option value="ESP" {% if inst.method == 'ESP' %}selected{% endif %}>Espèces</option>
+                <option value="CHQ" {% if inst.method == 'CHQ' %}selected{% endif %}>Chèque</option>
+              </select>
+              <button class="btn btn-primary btn-sm" type="submit">Modifier</button>
+            </form>
+            <form method="post" action="{{ url_for('main.delete_installment', payment_id=payment.id, installment_id=inst.id) }}" class="inline-form" onsubmit="return confirm('Supprimer cette échéance ?')">
+              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        {% else %}
+        <tr><td colspan="{{ 5 if can_access('admin', 'staff', 'manager') else 4 }}">Aucune échéance pour l'instant.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

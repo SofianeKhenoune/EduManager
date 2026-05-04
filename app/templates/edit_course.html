@@ -58,6 +58,10 @@ endblock %} {% block content %}
       </select>
     </label>
     <label>
+      Description
+      <input type="text" name="description" value="{{ course.description or '' }}" />
+    </label>
+    <label>
       Heure de début
       <input
         type="number"
@@ -76,6 +80,14 @@ endblock %} {% block content %}
         name="end_hour"
         value="{{ course.end_hour if course.end_hour is not none else '' }}"
       />
+    </label>
+    <label>
+      Salle
+      <input type="text" name="room" value="{{ course.room or '' }}" />
+    </label>
+    <label>
+      Capacite
+      <input type="number" min="1" name="capacity" value="{{ course.capacity or 20 }}" />
     </label>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Enregistrer</button>

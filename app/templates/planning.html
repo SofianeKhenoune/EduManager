@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Planning | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Planning des cours</h1>
+    <form method="get" class="search-form">
+      <select name="site_id">
+        <option value="">Tous les sites</option>
+        {% for site in sites %}
+          {% if selected_site_id == site.id %}
+        <option value="{{ site.id }}" selected>{{ site.name }}</option>
+          {% else %}
+        <option value="{{ site.id }}">{{ site.name }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button class="btn btn-secondary" type="submit">Filtrer</button>
+    </form>
+  </div>
+
+  <form method="post" class="form-grid compact-form">
+    <label>Cours
+      <select name="course_id" required>
+        <option value="">Selectionner</option>
+        {% for course in courses %}<option value="{{ course.id }}">{{ course.title }} - {{ course.schedule_label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Date de séance<input type="date" name="session_date" required /></label>
+    <label>Statut
+      <select name="status">
+        <option value="planned">Planifiee</option>
+        <option value="completed">Realisee</option>
+        <option value="cancelled">Annulee</option>
+      </select>
+    </label>
+    <label>Theme<input type="text" name="topic" /></label>
+    <label>Notes<textarea name="notes" rows="2"></textarea></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Planifier la séance</button></div>
+  </form>
+</section>
+
+<section class="dashboard-columns two-col">
+  <article class="panel section-block">
+    <h2>Grille hebdomadaire</h2>
+    <div class="planning-grid">
+      {% for day in weekday_order %}
+      <div class="planning-day">
+        <h3>{{ day|capitalize }}</h3>
+        <ul class="simple-list">
+          {% for course in schedule.get(day, []) %}
+          <li>
+            <strong>{{ course.title }}</strong><br />
+            {{ course.start_hour }}h-{{ course.end_hour }}h · {{ course.site.name if course.site else 'Sans site' }}
+          </li>
+          {% else %}
+          <li class="empty-row">Aucun cours.</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="panel section-block">
+    <h2>Séances a venir</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Cours</th><th>Theme</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          {% for session in sessions %}
+          <tr>
+            <td>{{ session.session_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ session.course.title }}</td>
+            <td>{{ session.topic or '—' }}</td>
+            <td>{{ session.status }}</td>
+            <td><a class="btn btn-secondary btn-sm" href="{{ url_for('main.session_detail', session_id=session.id) }}">Presence</a></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="empty-row">Aucune séance.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}

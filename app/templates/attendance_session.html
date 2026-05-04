@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Presence | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <div>
+      <h1>{{ session.course.title }}</h1>
+      <p class="text-muted">Séance du {{ session.session_date.strftime('%d/%m/%Y') }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Retour au planning</a>
+  </div>
+
+  <form method="post" class="form-grid compact-form">
+    <label>Theme<input type="text" name="topic" value="{{ session.topic or '' }}" /></label>
+    <label>Statut
+      <select name="session_status">
+        {% if session.status == 'planned' %}
+        <option value="planned" selected>Planifiee</option>
+        <option value="completed">Realisee</option>
+        <option value="cancelled">Annulee</option>
+        {% elif session.status == 'completed' %}
+        <option value="planned">Planifiee</option>
+        <option value="completed" selected>Realisee</option>
+        <option value="cancelled">Annulee</option>
+        {% else %}
+        <option value="planned">Planifiee</option>
+        <option value="completed">Realisee</option>
+        <option value="cancelled" selected>Annulee</option>
+        {% endif %}
+      </select>
+    </label>
+    <label>Notes<textarea name="notes" rows="2">{{ session.notes or '' }}</textarea></label>
+    <div class="table-wrap full-span">
+      <table>
+        <thead><tr><th>Élève</th><th>Statut</th><th>Commentaire</th></tr></thead>
+        <tbody>
+          {% for student in active_students %}
+          {% set record = existing_records.get(student.id) %}
+          <tr>
+            <td>{{ student.full_name }}</td>
+            <td>
+              <select name="student_{{ student.id }}">
+                {% if not record or record.status == 'present' %}
+                <option value="present" selected>Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Retard</option>
+                <option value="excused">Excuse</option>
+                {% elif record.status == 'absent' %}
+                <option value="present">Present</option>
+                <option value="absent" selected>Absent</option>
+                <option value="late">Retard</option>
+                <option value="excused">Excuse</option>
+                {% elif record.status == 'late' %}
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late" selected>Retard</option>
+                <option value="excused">Excuse</option>
+                {% else %}
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+                <option value="late">Retard</option>
+                <option value="excused" selected>Excuse</option>
+                {% endif %}
+              </select>
+            </td>
+            <td><input type="text" name="comment_{{ student.id }}" value="{{ record.comment if record else '' }}" /></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3" class="empty-row">Aucun élève actif sur ce cours.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Enregistrer la feuille</button></div>
+  </form>
+</section>
+{% endblock %}

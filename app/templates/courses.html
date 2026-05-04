@@ -1,11 +1,13 @@
-{% extends "base.html" %} {% block title %}Cours | EduManager{% endblock %} {%
-block content %}
+{% extends "base.html" %} {% block title %}Cours | EduManager{% endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>Cours</h1>
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
       >Retour au tableau de bord</a
     >
+  </div>
+  <div class="section-actions-row">
+    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Vue planning</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -69,12 +71,24 @@ block content %}
       </select>
     </label>
     <label>
+      Description
+      <input type="text" name="description" />
+    </label>
+    <label>
       Heure de début
       <input type="number" min="0" max="23" name="start_hour" />
     </label>
     <label>
       Heure de fin
       <input type="number" min="0" max="23" name="end_hour" />
+    </label>
+    <label>
+      Salle
+      <input type="text" name="room" />
+    </label>
+    <label>
+      Capacite
+      <input type="number" min="1" name="capacity" value="20" />
     </label>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Ajouter un cours</button>
@@ -90,8 +104,10 @@ block content %}
         <tr>
           <th>Titre</th>
           <th>Enseignant</th>
+          <th>Site</th>
           <th>Jour</th>
-          <th>Créneau</th>
+          <th>Capacite</th>
+          <th>Occupation</th>
           <th>Heures</th>
           <th></th>
         </tr>
@@ -104,28 +120,28 @@ block content %}
             {{ course.teacher.user.first_name }} {{
             course.teacher.user.last_name }}
           </td>
+          <td>{{ course.site.name if course.site else '-' }}</td>
           <td>{{ course.day or '-' }}</td>
-          <td>{{ course.time_slot or '-' }}</td>
+          <td>{{ course.active_enrollments_count }}/{{ course.capacity }}</td>
+          <td>{{ course.occupancy_rate }}%</td>
           <td>
             {% if course.start_hour is not none and course.end_hour is not none
             %} {{ course.start_hour }}h - {{ course.end_hour }}h {% else %} - {%
             endif %}
           </td>
           <td>
-            <a
-              class="btn btn-secondary"
-              href="{{ url_for('main.edit_course', course_id=course.id) }}"
-              >Modifier</a
-            >
+            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_course', course_id=course.id) }}">Modifier</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.session_detail', session_id=course.sessions[0].id) if course.sessions else url_for('main.planning_page') }}">Presence</a>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="6">Aucun cours pour le moment.</td>
+          <td colspan="8">Aucun cours pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% set pagination = courses_pagination %}{% set endpoint_name = 'main.courses_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

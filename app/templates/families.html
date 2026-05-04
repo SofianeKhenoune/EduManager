@@ -1,0 +1,71 @@
+{% extends "base.html" %} {% block title %}Familles | EduManager{% endblock %} {% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Familles</h1>
+    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-primary" href="{{ url_for('main.students_page') }}">Ajouter un élève</a>{% endif %}
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+  </div>
+</section>
+
+<section class="panel section-block">
+  <div class="section-head section-head-search">
+    <h2>Liste des familles</h2>
+    <form method="get" class="search-form" role="search">
+      <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher une famille..." />
+      <button class="btn btn-secondary" type="submit">Rechercher</button>
+      {% if search_query %}
+      <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Réinitialiser</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Famille</th>
+          <th>Tél. père</th>
+          <th>Tél. mère</th>
+          <th>Ville</th>
+          <th>Année</th>
+          <th>Tarif</th>
+          <th>Enfants</th>
+          <th>Regle</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in families %}
+        <tr>
+          <td>
+            <a href="{{ url_for('main.family_detail', family_id=f.id) }}" class="link-name">
+              {{ f.display_name }}
+            </a>
+            {% if f.father_first_name or f.mother_first_name %}
+            <small class="text-muted">
+              {% if f.father_first_name %}{{ f.father_first_name }}{% endif %}
+              {% if f.father_first_name and f.mother_first_name %} &amp; {% endif %}
+              {% if f.mother_first_name %}{{ f.mother_first_name }}{% endif %}
+            </small>
+            {% endif %}
+          </td>
+          <td>{{ f.father_phone or '—' }}</td>
+          <td>{{ f.mother_phone or '—' }}</td>
+          <td>{{ f.city or '—' }}</td>
+          <td>{{ f.school_year }}</td>
+          <td><span class="badge-tarif badge-tarif-{{ f.tarif_type }}">{{ f.tarif_type | capitalize }}</span></td>
+          <td>{{ f.students | length }}</td>
+          <td>{{ "%.2f"|format(f.total_paid) }} EUR</td>
+          <td class="td-actions">
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.family_detail', family_id=f.id) }}">Détail</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="empty-row">Aucune famille enregistrée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = families_pagination %}{% set endpoint_name = 'main.families_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

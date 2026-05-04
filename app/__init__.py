@@ -1,13 +1,17 @@
 import os
+from datetime import timedelta
 
 import click
-from flask import Flask
+from flask import Flask, request, session, url_for
+from flask_login import current_user
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
 migrate = Migrate()
+login_manager = LoginManager()
 
 
 def create_app() -> Flask:
@@ -35,17 +39,42 @@ def create_app() -> Flask:
         TEMPLATES_AUTO_RELOAD=template_auto_reload,
         ENABLE_BOOTSTRAP_ENDPOINT=os.getenv("ENABLE_BOOTSTRAP_ENDPOINT", "false").lower() in ("1", "true", "yes"),
         BOOTSTRAP_TOKEN=os.getenv("BOOTSTRAP_TOKEN", ""),
+        PERMANENT_SESSION_LIFETIME=timedelta(hours=1),
     )
     app.jinja_env.auto_reload = template_auto_reload
 
     db.init_app(app)
     migrate.init_app(app, db)
+    login_manager.init_app(app)
+    login_manager.login_view = "main.login"
+    login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
+    login_manager.login_message_category = "warning"
 
     from app import models
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return models.User.query.get(int(user_id))
+
     from app.routes import main_bp
     from app.seed import seed_demo_data, seed_initial_data
 
     app.register_blueprint(main_bp)
+
+    @app.context_processor
+    def inject_template_helpers():
+        def can_access(*roles):
+            return current_user.is_authenticated and hasattr(current_user, "has_role") and current_user.has_role(*roles)
+
+        def pagination_url(endpoint: str, page: int):
+            args = request.args.to_dict(flat=True)
+            args["page"] = page
+            return url_for(endpoint, **args)
+
+        return {
+            "can_access": can_access,
+            "pagination_url": pagination_url,
+        }
 
     @app.cli.command("seed-initial")
     @click.option("--admin-email", default=lambda: os.getenv("ADMIN_EMAIL", "admin@edumanager.local"))

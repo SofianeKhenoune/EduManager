@@ -1,86 +1,51 @@
-{% extends "base.html" %} {% block title %}Modifier l'élève | EduManager{%
-endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}Modifier l'élève | EduManager{% endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}"
-      >Retour</a
-    >
+    <h1>{{ student.first_name }} {{ student.last_name }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}">Retour</a>
   </div>
 
   <form method="post" class="form-grid">
-    <label>
-      Prénom *
-      <input
-        type="text"
-        name="first_name"
-        value="{{ student.user.first_name }}"
-        required
-      />
-    </label>
-    <label>
-      Nom *
-      <input
-        type="text"
-        name="last_name"
-        value="{{ student.user.last_name }}"
-        required
-      />
-    </label>
-    <label>
-      Email *
-      <input
-        type="email"
-        name="email"
-        value="{{ student.user.email }}"
-        required
-      />
-    </label>
-    <label>
-      Rue *
-      <input type="text" name="street" value="{{ student.street }}" required />
-    </label>
-    <label>
-      Ville *
-      <input type="text" name="city" value="{{ student.city }}" required />
-    </label>
-    <label>
-      Code postal *
-      <input
-        type="text"
-        name="zip_code"
-        value="{{ student.zip_code }}"
-        required
-      />
-    </label>
+    <label>Prénom *<input type="text" name="first_name" value="{{ student.first_name }}" required /></label>
+    <label>Nom *<input type="text" name="last_name" value="{{ student.last_name }}" required /></label>
     <label>
       Date de naissance *
-      <input
-        type="date"
-        name="birth_date"
-        value="{{ student.birth_date.isoformat() if student.birth_date else '' }}"
-        required
-      />
+      <input type="text" name="birth_date" class="fr-date-input" value="{{ student.birth_date.strftime('%d-%m-%Y') if student.birth_date else '' }}" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
+      <small class="text-muted">Format attendu: JJ-MM-AAAA</small>
+    </label>
+    <label>
+      Genre
+      <select name="gender">
+        <option value="">— Non précisé —</option>
+        <option value="M" {% if student.gender == 'M' %}selected{% endif %}>Garçon</option>
+        <option value="F" {% if student.gender == 'F' %}selected{% endif %}>Fille</option>
+      </select>
     </label>
     <label>
       Site
       <select name="site_id">
         <option value="">Aucun</option>
         {% for site in sites %}
-        <option
-          value="{{ site.id }}"
-          {%
-          if
-          student.site_id=""
-          ="site.id"
-          %}selected{%
-          endif
-          %}
-        >
-          {{ site.name }}
-        </option>
+        <option value="{{ site.id }}" {% if student.site_id == site.id %}selected{% endif %}>{{ site.name }}</option>
         {% endfor %}
       </select>
+    </label>
+    <label>
+      Famille
+      <select name="family_id">
+        <option value="">— Sans famille —</option>
+        {% for f in families %}
+        <option value="{{ f.id }}" {% if student.family_id == f.id %}selected{% endif %}>{{ f.display_name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="label-checkbox">
+      <input type="checkbox" name="is_reinscription" value="1" {% if student.is_reinscription %}checked{% endif %} />
+      Réinscription
+    </label>
+    <label class="label-checkbox">
+      <input type="checkbox" name="lives_alone" value="1" {% if student.lives_alone %}checked{% endif %} />
+      Rentre seul(e) à la maison
     </label>
     <div class="form-actions">
       <button class="btn btn-primary" type="submit">Enregistrer</button>
@@ -93,7 +58,7 @@ endblock %} {% block content %}
   <form
     method="post"
     action="{{ url_for('main.delete_student', student_id=student.id) }}"
-    onsubmit="return confirm('Supprimer définitivement cet élève ?');"
+    onsubmit="return confirm('{% if student.family and (student.family.students | length) == 1 and student.active_courses_count > 0 %}Cet élève est le seul actif de sa famille. Continuer ?{% else %}Supprimer définitivement cet élève ?{% endif %}');"
   >
     <div class="form-actions">
       <button class="btn btn-danger" type="submit">Supprimer l'élève</button>

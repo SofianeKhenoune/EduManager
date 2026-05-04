@@ -4,7 +4,7 @@ from typing import Dict, List
 from werkzeug.security import generate_password_hash
 
 from app import db
-from app.models import Course, Enrollment, Role, Site, Student, Teacher, User
+from app.models import Course, Enrollment, Family, Role, Site, Student, Teacher, User
 
 
 DEFAULT_ROLES: List[str] = [
@@ -14,6 +14,7 @@ DEFAULT_ROLES: List[str] = [
     "staff",
     "manager",
     "volunteer",
+    "parent",
 ]
 
 
@@ -81,8 +82,6 @@ def seed_demo_data() -> Dict[str, object]:
     db.session.flush()
 
     teacher_role_id = _get_role_id("teacher")
-    student_role_id = _get_role_id("student")
-
     created = {
         "roles_created": created_roles,
         "site_created": False,
@@ -121,29 +120,30 @@ def seed_demo_data() -> Dict[str, object]:
         db.session.flush()
         created["teacher_created"] = True
 
-    student_user = User.query.filter_by(email="student.demo@edumanager.local").first()
-    if student_user is None:
-        student_user = User(
-            first_name="Youssef",
-            last_name="Eleve",
-            email="student.demo@edumanager.local",
-            password_hash=generate_password_hash("Student123!"),
-            role_id=student_role_id,
-        )
-        db.session.add(student_user)
-        db.session.flush()
-        created["student_created"] = True
-    else:
-        student_user.role_id = student_role_id
-
-    student = Student.query.filter_by(user_id=student_user.id).first()
-    if student is None:
-        student = Student(
-            user_id=student_user.id,
-            site_id=site.id,
-            street="5 Avenue des Arts",
+    family = Family.query.filter_by(father_last_name="Demo").first()
+    if family is None:
+        family = Family(
+            school_year="2025-2026",
+            tarif_type="normal",
+            father_first_name="Karim",
+            father_last_name="Demo",
+            father_phone="0600000000",
+            father_email="parent.demo@edumanager.local",
             city="Paris",
             zip_code="75010",
+            street="5 Avenue des Arts",
+        )
+        db.session.add(family)
+        db.session.flush()
+
+    student = Student.query.filter_by(first_name="Youssef", last_name="Eleve").first()
+    if student is None:
+        student = Student(
+            first_name="Youssef",
+            last_name="Eleve",
+            site_id=site.id,
+            family_id=family.id,
+            gender="M",
             birth_date=date(2011, 5, 20),
             lives_alone=False,
         )

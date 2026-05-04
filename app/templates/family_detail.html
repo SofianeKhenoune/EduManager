@@ -1,0 +1,332 @@
+{% extends "base.html" %} {% block title %}{{ family.display_name }} | EduManager{% endblock %} {% block content %}
+
+{# ── Infos famille ── #}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>{{ family.display_name }}</h1>
+    <div style="display:flex;gap:.5rem;">
+      <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Retour</a>
+      {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('main.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Confirmer la suppression de cette famille ? Action possible uniquement s\'il n\'y a plus d\'élève actif.')">
+        <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+      </form>{% endif %}
+    </div>
+  </div>
+
+  {% if can_access('admin', 'staff', 'manager') %}
+  <form method="post" action="{{ url_for('main.edit_family', family_id=family.id) }}" class="form-grid">
+    <div class="form-group-title">Père / Tuteur légal</div>
+    <label>Prénom père<input type="text" name="father_first_name" value="{{ family.father_first_name or '' }}" /></label>
+    <label>Nom père<input type="text" name="father_last_name" value="{{ family.father_last_name or '' }}" /></label>
+    <label>Tél. père<input type="tel" name="father_phone" value="{{ family.father_phone or '' }}" /></label>
+    <label>Email père<input type="email" name="father_email" value="{{ family.father_email or '' }}" /></label>
+
+    <div class="form-group-title">Mère / Tutrice légale</div>
+    <label>Prénom mère<input type="text" name="mother_first_name" value="{{ family.mother_first_name or '' }}" /></label>
+    <label>Nom mère<input type="text" name="mother_last_name" value="{{ family.mother_last_name or '' }}" /></label>
+    <label>Tél. mère<input type="tel" name="mother_phone" value="{{ family.mother_phone or '' }}" /></label>
+    <label>Email mère<input type="email" name="mother_email" value="{{ family.mother_email or '' }}" /></label>
+
+    <div class="form-group-title">Adresse</div>
+    <label>N° de voie<input type="number" name="address_number" value="{{ family.address_number or '' }}" min="0" /></label>
+    <label>Rue<input type="text" name="street" value="{{ family.street or '' }}" /></label>
+    <label>Code postal<input type="text" name="zip_code" value="{{ family.zip_code or '' }}" /></label>
+    <label>Ville<input type="text" name="city" value="{{ family.city or '' }}" /></label>
+
+    <div class="form-group-title">Tarification</div>
+    <label>
+      Année scolaire
+      <input type="text" name="school_year" value="{{ family.school_year }}" />
+    </label>
+    <label>
+      Tarif
+      <select name="tarif_type">
+        {% if family.tarif_type == 'normal' %}
+        <option value="normal" selected>Normal</option>
+        <option value="special">Spécial</option>
+        {% else %}
+        <option value="normal">Normal</option>
+        <option value="special" selected>Spécial</option>
+        {% endif %}
+      </select>
+    </label>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+  {% else %}
+  <dl class="detail-grid">
+    <div><dt>Responsable 1</dt><dd>{{ family.father_first_name or '—' }} {{ family.father_last_name or '' }}</dd></div>
+    <div><dt>Responsable 2</dt><dd>{{ family.mother_first_name or '—' }} {{ family.mother_last_name or '' }}</dd></div>
+    <div><dt>Ville</dt><dd>{{ family.city or '—' }}</dd></div>
+    <div><dt>Tarif</dt><dd>{{ family.tarif_type|capitalize }}</dd></div>
+  </dl>
+  {% endif %}
+</section>
+
+{% if suggest_delete and family.students | length == 0 and can_access('admin', 'staff', 'manager') %}
+<section class="panel section-block">
+  <h2>Famille sans élève actif</h2>
+  <p class="text-muted">Le dernier élève actif rattache a cette famille vient d'etre supprime. Voulez-vous supprimer cette famille ?</p>
+  <form method="post" action="{{ url_for('main.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Supprimer cette famille maintenant ?')">
+    <button class="btn btn-danger btn-sm" type="submit">Supprimer la famille</button>
+  </form>
+</section>
+{% endif %}
+
+{# ── Grille tarifaire ── #}
+<section class="panel section-block">
+  <h2>Grille tarifaire — {{ family.school_year }}</h2>
+  <div class="tarif-grid-wrap">
+    <table class="tarif-table">
+      <thead>
+        <tr>
+          <th>Enfants inscrits</th>
+          <th>Tarif normal</th>
+          <th>Tarif spécial</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1 enfant</td><td>320 € <small>(320 × 1)</small></td><td>290 € <small>(290 × 1)</small></td></tr>
+        <tr><td>2 enfants</td><td>580 € <small>(290 × 2)</small></td><td>520 € <small>(260 × 2)</small></td></tr>
+        <tr><td>3 enfants et +</td><td>780 € <small>(260 × 3)</small></td><td>690 € <small>(230 × 3)</small></td></tr>
+      </tbody>
+    </table>
+    <div class="tarif-suggestion">
+      {% set n = family.active_children_count %}
+      <p><strong>Enfants actifs :</strong> {{ n }}</p>
+      {% if n %}
+      <p class="tarif-amount">Montant attendu : <strong>{{ suggested }} €</strong></p>
+      {% else %}
+      <p class="text-muted">Aucune inscription active pour cette famille.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{# ── Enfants ── #}
+<section class="panel section-block">
+  <h2>Enfants rattachés</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nom</th><th>Prénom</th><th>Né(e) le</th><th>Genre</th><th>Réinscription</th><th>Inscriptions actives</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for s in family.students %}
+        {% set active_count = s.enrollments | selectattr('status', 'equalto', 'active') | list | length %}
+        <tr>
+          <td>{{ s.last_name }}</td>
+          <td>{{ s.first_name }}</td>
+          <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }}</td>
+          <td>{% if s.gender == 'M' %}Garçon{% elif s.gender == 'F' %}Fille{% else %}—{% endif %}</td>
+          <td>{% if s.is_reinscription %}<span class="badge-reinscription">Réinscription</span>{% else %}Nouveau{% endif %}</td>
+          <td>{{ active_count }}</td>
+          <td class="td-actions">
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.student_certificate_pdf', student_id=s.id) }}">Attestation</a>
+            {% if can_access('admin', 'staff', 'manager') %}
+            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_student', student_id=s.id) }}">Modifier</a>
+            <form method="post" action="{{ url_for('main.family_remove_student', family_id=family.id, student_id=s.id) }}" class="inline-form" onsubmit="return confirm('Retirer cet élève de la famille ?')">
+              <button class="btn btn-danger btn-sm" type="submit">Retirer</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-row">Aucun enfant rattaché.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if can_access('admin', 'staff', 'manager') and students_without_family %}
+  {% if can_access('admin', 'staff', 'manager') %}<details class="collapsible-block" style="margin-top:1rem;">
+    <summary class="collapsible-summary">Rattacher un élève existant (sans famille)</summary>
+    <form method="post" action="{{ url_for('main.family_add_student', family_id=family.id) }}" class="form-inline-row" style="margin-top:.75rem;">
+      <label>
+        Élève
+        <select name="student_id" required>
+          <option value="">— Sélectionner —</option>
+          {% for s in students_without_family %}
+          <option value="{{ s.id }}">{{ s.last_name }} {{ s.first_name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="btn btn-secondary" type="submit">Rattacher</button>
+    </form>
+  </details>
+  {% endif %}
+
+  <details class="collapsible-block" style="margin-top:1rem;">
+    <summary class="collapsible-summary">Ajouter un frère / une sœur</summary>
+    <form method="post" action="{{ url_for('main.family_new_student', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+      <label>Prénom *<input type="text" name="first_name" required /></label>
+      <label>Nom *<input type="text" name="last_name" required /></label>
+      <label>
+        Date de naissance *
+        <input type="text" name="birth_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
+        <small class="text-muted">Format attendu: JJ-MM-AAAA</small>
+      </label>
+      <label>
+        Genre
+        <select name="gender">
+          <option value="">— Non précisé —</option>
+          <option value="M">Garçon</option>
+          <option value="F">Fille</option>
+        </select>
+      </label>
+      <label>
+        Site
+        <select name="site_id">
+          <option value="">Aucun</option>
+          {% for site in sites %}
+          {% if family.students and family.students[0].site_id == site.id %}
+          <option value="{{ site.id }}" selected>{{ site.name }}</option>
+          {% else %}
+          <option value="{{ site.id }}">{{ site.name }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+      </label>
+      <label class="label-checkbox">
+        <input type="checkbox" name="is_reinscription" value="1" />
+        Réinscription
+      </label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Ajouter l'enfant à la famille</button>
+      </div>
+    </form>
+  </details>{% endif %}
+</section>
+
+<section class="panel section-block">
+  <h2>Suivi pédagogique récent</h2>
+  <div class="dashboard-columns two-col">
+    <div>
+      <h3>Évaluations</h3>
+      <ul class="simple-list">
+        {% for assessment in assessments %}
+        <li class="list-row-between">
+          <span>{{ assessment.student.full_name }} - {{ assessment.category }}</span>
+          <strong>{% if assessment.score is not none %}{{ assessment.score }}/{{ assessment.max_score }}{% else %}Observation{% endif %}</strong>
+        </li>
+        {% else %}
+        <li class="empty-row">Aucune évaluation.</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3>Dernières présences</h3>
+      <ul class="simple-list">
+        {% for record in attendance_records %}
+        <li class="list-row-between">
+          <span>{{ record.student.full_name }} - {{ record.session.course.title }}</span>
+          <strong>{{ record.status }}</strong>
+        </li>
+        {% else %}
+        <li class="empty-row">Aucune présence enregistrée.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+{# ── Paiements ── #}
+{# ── Compte parent ── #}
+{% if can_access('admin', 'staff', 'manager') %}
+<section class="panel section-block">
+  <h2>Compte parent (connexion)</h2>
+  {% if family.user %}
+  <p>Compte actif : <strong>{{ family.user.first_name }} {{ family.user.last_name }}</strong> — {{ family.user.email }}</p>
+  <details class="collapsible-block" style="margin-top:.75rem;">
+    <summary class="collapsible-summary">Modifier le compte</summary>
+    <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+      <input type="hidden" name="action" value="update" />
+      <label>Prénom *<input type="text" name="first_name" value="{{ family.user.first_name }}" required /></label>
+      <label>Nom *<input type="text" name="last_name" value="{{ family.user.last_name }}" required /></label>
+      <label>Email *<input type="email" name="email" value="{{ family.user.email }}" required /></label>
+      <label>Nouveau mot de passe<input type="password" name="password" /></label>
+      <div class="form-actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" type="submit">Mettre à jour</button>
+      </div>
+    </form>
+  </details>
+  <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="inline-form" style="margin-top:.5rem;" onsubmit="return confirm('Supprimer le compte parent ?')">
+    <input type="hidden" name="action" value="remove" />
+    <button class="btn btn-danger btn-sm" type="submit">Supprimer le compte</button>
+  </form>
+  {% else %}
+  <p class="text-muted" style="margin-bottom:.75rem;">Aucun compte de connexion pour cette famille.</p>
+  <details class="collapsible-block">
+    <summary class="collapsible-summary">➕ Créer un compte parent</summary>
+    <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+      <input type="hidden" name="action" value="create" />
+      <label>Prénom *<input type="text" name="first_name" value="{{ family.father_first_name or family.mother_first_name or '' }}" required /></label>
+      <label>Nom *<input type="text" name="last_name" value="{{ family.father_last_name or family.mother_last_name or '' }}" required /></label>
+      <label>Email *<input type="email" name="email" value="{{ family.father_email or family.mother_email or '' }}" required /></label>
+      <label>Mot de passe *<input type="password" name="password" required /></label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Créer le compte</button>
+      </div>
+    </form>
+  </details>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel section-block">
+  <h2>Paiements</h2>
+
+  {% if can_access('admin', 'staff', 'manager') %}
+  <form method="post" action="{{ url_for('main.payments_page') }}" class="form-grid">
+    <input type="hidden" name="family_id" value="{{ family.id }}" />
+    <label>
+      Montant total (€) *
+      <input type="number" name="total_amount" min="0" step="0.01" value="{{ suggested if suggested else '' }}" required />
+    </label>
+    <label>
+      Date
+      <input type="date" name="payment_date" />
+    </label>
+    <label>
+      Moyen de paiement
+      <select name="method">
+        <option value="">— Non précisé —</option>
+        <option value="CB">Carte bancaire</option>
+        <option value="ESP">Espèces</option>
+        <option value="CHQ">Chèque</option>
+      </select>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Créer un paiement</button>
+    </div>
+  </form>
+  {% endif %}
+
+  <div class="table-wrap" style="margin-top:1.5rem;">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Montant</th><th>Moyen</th><th>Échéances</th><th>Réglé</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for p in family.payments %}
+        {% set paid = p.installments | sum(attribute='amount') %}
+        <tr>
+          <td>{{ p.payment_date.strftime('%d/%m/%Y') if p.payment_date else '—' }}</td>
+          <td>{{ "%.2f"|format(p.total_amount) }} €</td>
+          <td>{% if p.method == 'CB' %}CB{% elif p.method == 'ESP' %}Espèces{% elif p.method == 'CHQ' %}Chèque{% else %}—{% endif %}</td>
+          <td>{{ p.installments | length }}</td>
+          <td class="{% if paid >= p.total_amount %}paid-full{% elif paid > 0 %}paid-partial{% else %}paid-none{% endif %}">{{ "%.2f"|format(paid) }} €</td>
+          <td class="td-actions">
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.payment_detail', payment_id=p.id) }}">Détail</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.payment_receipt_pdf', payment_id=p.id) }}">Reçu PDF</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-row">Aucun paiement enregistré.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

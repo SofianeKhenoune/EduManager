@@ -1,0 +1,121 @@
+{% extends "base.html" %} {% block title %}Inscriptions | EduManager{% endblock %} {% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Inscriptions</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+  </div>
+
+  {% if quick_flow and selected_student_id %}
+  <p class="text-muted">Etape 2/3 : inscrivez l'élève a un cours. L'élève est déjà preselectionne.</p>
+  {% endif %}
+
+  <form method="post" class="form-grid">
+    {% if quick_flow %}
+    <input type="hidden" name="quick_flow" value="1" />
+    {% endif %}
+    <label>
+      Élève *
+      <select name="student_id" required>
+        <option value="">— Sélectionner —</option>
+        {% for student in students %}
+        {% if selected_student_id == student.id %}
+        <option value="{{ student.id }}" selected>{{ student.last_name }} {{ student.first_name }}</option>
+        {% else %}
+        <option value="{{ student.id }}">{{ student.last_name }} {{ student.first_name }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </label>
+    {% if selected_student and selected_student.is_reinscription %}
+    <div class="reinscription-badge">
+      <span class="badge badge-reinscription">Réinscription</span>
+    </div>
+    {% endif %}
+    <label>
+      Cours *
+      <select name="course_id" required>
+        <option value="">— Sélectionner —</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}">{{ course.title }} ({{ course.day }}, {{ course.start_hour }}h–{{ course.end_hour }}h)</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Statut
+      <select name="status">
+        <option value="active">Actif</option>
+        <option value="en_attente">En attente</option>
+        <option value="annulee">Annulée</option>
+      </select>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Ajouter une inscription</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <div class="section-head section-head-search">
+    <h2>Liste des inscriptions</h2>
+    <form method="get" class="search-form" role="search">
+      {% if selected_student_id %}<input type="hidden" name="student_id" value="{{ selected_student_id }}" />{% endif %}
+      {% if quick_flow %}<input type="hidden" name="quick_flow" value="1" />{% endif %}
+      <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher..." />
+      <button class="btn btn-secondary" type="submit">Rechercher</button>
+      {% if search_query %}
+      <a class="btn btn-secondary" href="{{ url_for('main.enrollments_page', student_id=selected_student_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Élève</th>
+          <th>Cours</th>
+          <th>Date</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in enrollments %}
+        <tr>
+          <td>{{ e.student.last_name }} {{ e.student.first_name }}</td>
+          <td>{{ e.course.title }}</td>
+          <td>{{ e.enrollment_date.strftime('%d/%m/%Y') if e.enrollment_date else '—' }}</td>
+          <td>
+            <form method="post" action="{{ url_for('main.edit_enrollment', enrollment_id=e.id) }}" class="inline-form">
+              <select name="status" onchange="this.form.submit()" class="status-select status-{{ e.status }}">
+                {% if e.status == 'active' %}
+                <option value="active" selected>Actif</option>
+                <option value="en_attente">En attente</option>
+                <option value="annulee">Annulee</option>
+                {% elif e.status == 'en_attente' %}
+                <option value="active">Actif</option>
+                <option value="en_attente" selected>En attente</option>
+                <option value="annulee">Annulee</option>
+                {% else %}
+                <option value="active">Actif</option>
+                <option value="en_attente">En attente</option>
+                <option value="annulee" selected>Annulee</option>
+                {% endif %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{{ url_for('main.delete_enrollment', enrollment_id=e.id) }}" onsubmit="return confirm('Supprimer cette inscription ?')">
+              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Aucune inscription.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = enrollments_pagination %}{% set endpoint_name = 'main.enrollments_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

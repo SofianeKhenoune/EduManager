@@ -4,53 +4,93 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}EduManager{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/main.css') }}"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
   </head>
   <body>
     <header class="topbar">
       <div class="page-shell topbar-inner">
-        <div class="brand">
+        <a class="brand" href="{{ url_for('main.index') }}">
           <span class="brand-badge">EM</span>
           <span>EduManager</span>
-        </div>
-        <nav class="nav-links" aria-label="Navigation principale">
+        </a>
+        <nav class="nav-links" id="main-nav" aria-label="Navigation principale">
           <a href="{{ url_for('main.index') }}">Tableau de bord</a>
-          <a href="{{ url_for('main.students_page') }}">Élèves</a>
-          <a href="{{ url_for('main.teachers_page') }}">Enseignants</a>
-          <a href="{{ url_for('main.courses_page') }}">Cours</a>
-          <a href="{{ url_for('main.employees_page') }}">Employés</a>
+          {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager', 'teacher', 'parent') %}
+          <div class="nav-dropdown">
+            <button class="nav-drop-btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Pédagogie
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="nav-drop-menu" role="menu">
+              {% if can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.students_page') }}" role="menuitem">Élèves</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'parent') %}<a href="{{ url_for('main.families_page') }}" role="menuitem">Familles</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.enrollments_page') }}" role="menuitem">Inscriptions</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.teacher_my_classes') }}" role="menuitem">Mes classes</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.courses_page') }}" role="menuitem">Cours</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.planning_page') }}" role="menuitem">Planning</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.assessments_page') }}" role="menuitem">Évaluations</a>{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager') %}
+          <div class="nav-dropdown">
+            <button class="nav-drop-btn" type="button" aria-haspopup="true" aria-expanded="false">
+              Administration
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>
+            </button>
+            <div class="nav-drop-menu" role="menu">
+              <a href="{{ url_for('main.teachers_page') }}" role="menuitem">Enseignants</a>
+              <a href="{{ url_for('main.employees_page') }}" role="menuitem">Employés</a>
+              <a href="{{ url_for('main.sites_page') }}" role="menuitem">Sites</a>
+              <a href="{{ url_for('main.departments_page') }}" role="menuitem">Departements</a>
+              <a href="{{ url_for('main.positions_page') }}" role="menuitem">Postes</a>
+            </div>
+          </div>
+          <a href="{{ url_for('main.payments_page') }}">Paiements</a>
+          {% elif current_user.is_authenticated and can_access('parent') %}
+          <a href="{{ url_for('main.payments_page') }}">Paiements</a>
+          {% endif %}
         </nav>
+        <div class="topbar-right">
+          {% if current_user.is_authenticated %}
+          <div class="nav-profile">
+            <span class="nav-avatar" aria-hidden="true">{{ current_user.first_name[0] | upper }}{{ current_user.last_name[0] | upper if current_user.last_name else '' }}</span>
+            <a href="{{ url_for('main.logout') }}" class="nav-logout" title="Déconnexion">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <span>Déconnexion</span>
+            </a>
+          </div>
+          {% else %}
+          <a class="btn btn-primary" href="{{ url_for('main.login') }}">Connexion</a>
+          {% endif %}
+          <button class="nav-burger" id="nav-burger" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
       </div>
     </header>
 
     <main class="main">
       <div class="page-shell">
-        {% with messages = get_flashed_messages(with_categories=true) %} {% if
-        messages %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
         <section class="flash-stack">
           {% for category, message in messages %}
-          <article class="flash-item flash-{{ category }}">
-            {{ message }}
-          </article>
+          <article class="flash-item flash-{{ category }}">{{ message }}</article>
           {% endfor %}
         </section>
-        {% endif %} {% endwith %} {% block content %}{% endblock %}
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
       </div>
     </main>
 
-    <footer class="footer page-shell">
-      EduManager : gestion des élèves, des cours, des enseignants et du
-      personnel.
-    </footer>
+    <footer class="footer page-shell">EduManager : pilotage scolaire, financier et RH sur une seule interface.</footer>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   </body>
 </html>

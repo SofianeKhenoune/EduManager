@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}{{ course.title }} | EduManager{% endblock %}
+{% block content %}
+
+<section class="panel section-block">
+  <div class="section-head">
+    <div>
+      <h1>{{ course.title }}</h1>
+      <p class="text-muted">
+        {% if course.level %}{{ course.level }} — {% endif %}
+        {% if course.site %}{{ course.site.name }} — {% endif %}
+        {% if course.day %}{{ course.day | capitalize }}{% if course.start_hour is not none %} {{ '%02d'|format(course.start_hour) }}h–{{ '%02d'|format(course.end_hour) }}h{% endif %}{% endif %}
+      </p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('main.teacher_my_classes') }}">Mes classes</a>
+  </div>
+
+  {# ── KPI strip ── #}
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ students | length }}</span>
+      <span class="kpi-label">Élèves</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ completed_sessions | length }}</span>
+      <span class="kpi-label">Séances réalisées</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-value">{{ all_sessions | length - completed_sessions | length }}</span>
+      <span class="kpi-label">Séances planifiées</span>
+    </div>
+  </div>
+</section>
+
+{# ── Élèves + assiduité ── #}
+<section class="panel section-block">
+  <div class="section-head">
+    <h2>Élèves &amp; assiduité</h2>
+    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning / Appel</a>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Élève</th>
+          <th>Âge</th>
+          <th>Présent</th>
+          <th>Absent</th>
+          <th>Retard</th>
+          <th>Excusé</th>
+          <th>Assiduité</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        {% set s = attendance_stats[student.id] %}
+        <tr>
+          <td>{{ student.full_name }}</td>
+          <td>{{ student.age }}</td>
+          <td>{{ s.present }}</td>
+          <td class="{{ 'text-danger' if s.absent > 2 else '' }}">{{ s.absent }}</td>
+          <td>{{ s.late }}</td>
+          <td>{{ s.excused }}</td>
+          <td>
+            {% if s.présence_pct is not none %}
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" style="width: {{ s.présence_pct }}%;">&nbsp;</div>
+            </div>
+            <small>{{ s.présence_pct }}%</small>
+            {% else %}
+            <small class="text-muted">—</small>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty-row">Aucun élève inscrit.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ── Séances ── #}
+<section class="panel section-block">
+  <div class="section-head">
+    <h2>Séances</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Thème</th><th>Statut</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for cs in all_sessions | sort(attribute='session_date', reverse=True) %}
+        <tr>
+          <td>{{ cs.session_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ cs.topic or '—' }}</td>
+          <td>
+            {% if cs.status == 'completed' %}<span class="badge badge-success">Réalisée</span>
+            {% elif cs.status == 'cancelled' %}<span class="badge badge-danger">Annulée</span>
+            {% else %}<span class="badge badge-info">Planifiée</span>
+            {% endif %}
+          </td>
+          <td><a class="btn btn-secondary" href="{{ url_for('main.session_detail', session_id=cs.id) }}">Appel</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty-row">Aucune séance planifiée.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ── Notes & comportement ── #}
+<section class="panel section-block">
+  <div class="section-head">
+    <h2>Notes &amp; comportement</h2>
+  </div>
+
+  {# Add assessment form (toggle) #}
+  <form method="post" action="{{ url_for('main.teacher_add_assessment', course_id=course.id) }}" class="form-grid compact-form">
+    <label>Élève *
+      <select name="student_id" required>
+        <option value="">Sélectionner</option>
+        {% for student in students %}<option value="{{ student.id }}">{{ student.full_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Catégorie
+      <select name="category">
+        {% for cat in assessment_categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Date<input type="date" name="assessment_date" value="{{ today.strftime('%Y-%m-%d') }}" /></label>
+    <label>Score<input type="number" step="0.5" min="0" name="score" /></label>
+    <label>Note max<input type="number" step="0.5" min="1" name="max_score" value="20" /></label>
+    <label class="full-span">Appréciation / Observation<textarea name="appreciation" rows="2" placeholder="Facultatif — pour comportement, participation..."></textarea></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
+  </form>
+
+  {# Per-student tables #}
+  {% for student in students %}
+  {% set evals = assessments_by_student[student.id] %}
+  {% if evals %}
+  <h3 class="student-subhead">{{ student.full_name }}</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Catégorie</th><th>Score</th><th>Appréciation</th><th></th></tr></thead>
+      <tbody>
+        {% for a in evals %}
+        <tr>
+          <td>{{ a.assessment_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ a.category }}</td>
+          <td>
+            {% if a.score is not none %}
+            {{ a.score }}/{{ a.max_score }}
+            <small class="{{ 'text-danger' if a.percentage < 50 else ('text-warning' if a.percentage < 70 else 'text-success') }}">({{ a.percentage }}%)</small>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ a.appreciation or '—' }}</td>
+          <td>
+            <form method="post" action="{{ url_for('main.teacher_delete_assessment', course_id=course.id, assessment_id=a.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
+              <button class="btn btn-danger btn-sm" type="submit">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% if not assessments_by_student %}
+  <p class="empty-row">Aucune évaluation enregistrée pour ce cours.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

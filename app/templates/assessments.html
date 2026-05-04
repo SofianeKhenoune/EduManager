@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Évaluations | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Évaluations élèves</h1>
+    <form method="get" class="search-form">
+      <select name="student_id">
+        <option value="">Tous les élèves</option>
+        {% for student in students %}<option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>{{ student.full_name }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-secondary" type="submit">Filtrer</button>
+    </form>
+  </div>
+
+  <form method="post" class="form-grid compact-form">
+    <label>Élève
+      <select name="student_id" required>
+        <option value="">Selectionner</option>
+        {% for student in students %}<option value="{{ student.id }}">{{ student.full_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Cours
+      <select name="course_id">
+        <option value="">Aucun</option>
+        {% for course in courses %}<option value="{{ course.id }}">{{ course.title }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Date<input type="date" name="assessment_date" /></label>
+    <label>Categorie<input type="text" name="category" value="Controle continu" /></label>
+    <label>Score<input type="number" step="0.01" name="score" /></label>
+    <label>Note max<input type="number" step="0.01" name="max_score" value="20" /></label>
+    <label class="full-span">Appreciation<textarea name="appreciation" rows="2"></textarea></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Enregistrer</button></div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Élève</th><th>Cours</th><th>Date</th><th>Categorie</th><th>Score</th><th></th></tr></thead>
+      <tbody>
+        {% for assessment in assessments %}
+        <tr>
+          <td>{{ assessment.student.full_name }}</td>
+          <td>{{ assessment.course.title if assessment.course else '—' }}</td>
+          <td>{{ assessment.assessment_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ assessment.category }}</td>
+          <td>{% if assessment.score is not none %}{{ assessment.score }}/{{ assessment.max_score }} ({{ assessment.percentage }}%){% else %}Observation{% endif %}</td>
+          <td>
+            <form method="post" action="{{ url_for('main.delete_assessment', assessment_id=assessment.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
+              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="empty-row">Aucune évaluation.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = assessments_pagination %}{% set endpoint_name = 'main.assessments_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

@@ -346,39 +346,7 @@
     font-weight: 600;
     margin-right: 0.5rem;
   }
-
-  .login-cta {
-    text-align: center;
-    padding: 3rem;
-  }
-
-  .login-cta h2 {
-    margin-bottom: 1rem;
-  }
-
-  .login-cta a {
-    display: inline-block;
-    padding: 0.75rem 2rem;
-    background: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-weight: 500;
-    transition: background 0.2s;
-  }
-
-  .login-cta a:hover {
-    background: #0056b3;
-  }
 </style>
-
-{% if not current_user.is_authenticated %}
-<div class="layout-section login-cta">
-  <h2>Bienvenue dans EduManager</h2>
-  <p>Connectez-vous pour accéder au tableau de bord dynamique</p>
-  <a href="{{ url_for('main.login') }}">Se connecter</a>
-</div>
-{% else %}
 
 <div class="dashboard-header">
   <h1 class="dashboard-title">Tableau de bord dynamique</h1>
@@ -601,13 +569,10 @@ function updateKPIs(data) {
   
   // Payment collection
   const collectionPercent = data.payment_collection_percent || 0;
-  const hasPaymentData = Number(data.payments_total || 0) > 0;
-  document.querySelector('[data-kpi="payment_collection_percent"]').textContent = hasPaymentData
-    ? collectionPercent.toFixed(1) + '%'
-    : '-';
+  document.querySelector('[data-kpi="payment_collection_percent"]').textContent = collectionPercent.toFixed(1) + '%';
   const collectionProgress = document.getElementById('collection-progress');
-  collectionProgress.style.width = (hasPaymentData ? collectionPercent : 0) + '%';
-  collectionProgress.className = 'progress-fill ' + (hasPaymentData ? (collectionPercent >= 80 ? '' : collectionPercent >= 50 ? 'warning' : 'critical') : '');
+  collectionProgress.style.width = collectionPercent + '%';
+  collectionProgress.className = 'progress-fill ' + (collectionPercent >= 80 ? '' : collectionPercent >= 50 ? 'warning' : 'critical');
   
   // Occupancy
   const occupancy = data.avg_occupancy || 0;
@@ -698,7 +663,7 @@ function updateAlerts(data) {
 
   const alerts = [];
   
-  if ((data.payments_total || 0) > 0 && data.payment_collection_percent < 50) {
+  if (data.payment_collection_percent < 50) {
     alerts.push({
       type: 'danger',
       title: 'Collecte faible',
@@ -738,6 +703,20 @@ function updateActivityTimeline(data) {
           <div class="activity-dot" style="background: #4CAF50;"></div>
           <div class="activity-content">
             <div class="activity-title">Paiement enregistré</div>
+            <div class="activity-time">Le ${new Date(item.created_at).toLocaleDateString('fr-FR')}</div>
+          </div>
+        </li>
+      `;
+    });
+  }
+
+  if (data.recent_enrollments && data.recent_enrollments.length > 0) {
+    data.recent_enrollments.slice(0, 3).forEach(item => {
+      html += `
+        <li class="activity-item">
+          <div class="activity-dot" style="background: #2196F3;"></div>
+          <div class="activity-content">
+            <div class="activity-title">Nouvelle inscription</div>
             <div class="activity-time">Le ${new Date(item.created_at).toLocaleDateString('fr-FR')}</div>
           </div>
         </li>
@@ -792,5 +771,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-{% endif %}
 {% endblock %}

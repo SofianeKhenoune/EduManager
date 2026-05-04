@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Acces refuse | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block centered-panel">
+  <div class="eyebrow">Erreur 403</div>
+  <h1>Acces refuse</h1>
+  <p>Votre role ne permet pas d'ouvrir cette page.</p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+  </div>
+</section>
+{% endblock %}

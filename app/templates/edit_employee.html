@@ -140,20 +140,19 @@ endblock %} {% block content %}
       />
     </label>
     <label>
+      Fin de contrat
+      <input
+        type="date"
+        name="contract_end_date"
+        value="{{ employee.contract_end_date.isoformat() if employee.contract_end_date else '' }}"
+      />
+    </label>
+    <label>
       Position
       <select name="position_id">
         <option value="">Aucune</option>
         {% for position in positions %}
-        <option
-          value="{{ position.id }}"
-          {%
-          if
-          employee.position_id=""
-          ="position.id"
-          %}selected{%
-          endif
-          %}
-        >
+        <option value="{{ position.id }}" {% if employee.position_id == position.id %}selected{% endif %}>
           {{ position.title }}
         </option>
         {% endfor %}
@@ -164,16 +163,7 @@ endblock %} {% block content %}
       <select name="department_id">
         <option value="">Aucun</option>
         {% for department in departments %}
-        <option
-          value="{{ department.id }}"
-          {%
-          if
-          employee.department_id=""
-          ="department.id"
-          %}selected{%
-          endif
-          %}
-        >
+        <option value="{{ department.id }}" {% if employee.department_id == department.id %}selected{% endif %}>
           {{ department.name }}
         </option>
         {% endfor %}

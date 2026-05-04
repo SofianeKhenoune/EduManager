@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Fiche employé | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <div>
+      <h1>{{ employee.full_name }}</h1>
+      <p class="text-muted">Matricule {{ employee.employee_id }} · {{ employee.department.name if employee.department else 'Sans département' }}</p>
+    </div>
+    <div class="section-actions-row">
+      <a class="btn btn-secondary" href="{{ url_for('main.edit_employee', emp_id=employee.id) }}">Modifier</a>
+      <a class="btn btn-secondary" href="{{ url_for('main.employees_page') }}">Retour</a>
+    </div>
+  </div>
+
+  <dl class="detail-grid">
+    <div><dt>Poste</dt><dd>{{ employee.position.title if employee.position else '—' }}</dd></div>
+    <div><dt>Contrat</dt><dd>{{ employee.contract_type or '—' }}</dd></div>
+    <div><dt>Embauche</dt><dd>{{ employee.hire_date.strftime('%d/%m/%Y') if employee.hire_date else '—' }}</dd></div>
+    <div><dt>Salaire mensuel</dt><dd>{{ '%.2f'|format(employee.monthly_salary) if employee.monthly_salary else '—' }} EUR</dd></div>
+    <div><dt>Heures / semaine</dt><dd>{{ employee.hours_per_week or '—' }}</dd></div>
+    <div><dt>Taux PAS</dt><dd>{{ employee.pas_rate or '—' }}</dd></div>
+  </dl>
+</section>
+
+<section class="dashboard-columns three-col">
+  <article class="panel section-block compact-panel">
+    <div class="section-head"><h2>Historique salarial</h2></div>
+    <form method="post" class="form-grid compact-form">
+      <input type="hidden" name="action" value="salary" />
+      <label>Type de contrat<input type="text" name="contract_type" value="{{ employee.contract_type or '' }}" /></label>
+      <label>Taux horaire<input type="number" step="0.01" name="hourly_rate" /></label>
+      <label>Salaire annuel<input type="number" step="0.01" name="annual_salary" /></label>
+      <label>Date d'effet<input type="date" name="effective_date" /></label>
+      <label>Avantages<textarea name="benefits" rows="2"></textarea></label>
+      <label>Notes<textarea name="notes" rows="2"></textarea></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
+    </form>
+    <ul class="simple-list">
+      {% for detail in employee.salary_details | sort(attribute='effective_date', reverse=True) %}
+      <li>{{ detail.effective_date.strftime('%d/%m/%Y') if detail.effective_date else '—' }} · {{ '%.2f'|format(detail.annual_salary) if detail.annual_salary else '—' }} EUR</li>
+      {% else %}
+      <li class="empty-row">Aucun historique salarial.</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="panel section-block compact-panel">
+    <div class="section-head"><h2>Évaluations RH</h2></div>
+    <form method="post" class="form-grid compact-form">
+      <input type="hidden" name="action" value="review" />
+      <label>Date<input type="date" name="review_date" required /></label>
+      <label>Note<input type="number" min="1" max="5" name="rating" required /></label>
+      <label>Commentaires<textarea name="comments" rows="2"></textarea></label>
+      <label>Objectifs<textarea name="goals" rows="2"></textarea></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
+    </form>
+    <ul class="simple-list">
+      {% for review in employee.performance_reviews | sort(attribute='review_date', reverse=True) %}
+      <li class="list-row-between"><span>{{ review.review_date.strftime('%d/%m/%Y') }}</span><strong>{{ review.rating }}/5</strong></li>
+      {% else %}
+      <li class="empty-row">Aucune évaluation.</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="panel section-block compact-panel">
+    <div class="section-head"><h2>Congés</h2></div>
+    <form method="post" class="form-grid compact-form">
+      <input type="hidden" name="action" value="leave" />
+      <label>Debut<input type="date" name="start_date" required /></label>
+      <label>Fin<input type="date" name="end_date" required /></label>
+      <label>Type<input type="text" name="leave_type" placeholder="Congé paye" /></label>
+      <label>Statut
+        <select name="status">
+          <option value="pending">En attente</option>
+          <option value="approved">Approuve</option>
+          <option value="rejected">Refuse</option>
+        </select>
+      </label>
+      <label>Commentaire<textarea name="comments" rows="2"></textarea></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
+    </form>
+    <div class="table-wrap small-table-wrap">
+      <table>
+        <thead><tr><th>Periode</th><th>Type</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          {% for leave in employee.leave_requests | sort(attribute='start_date', reverse=True) %}
+          <tr>
+            <td>{{ leave.start_date.strftime('%d/%m/%Y') }} - {{ leave.end_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ leave.leave_type }}</td>
+            <td>{{ leave.status }}</td>
+            <td>
+              <form method="post" action="{{ url_for('main.update_leave_status', emp_id=employee.id, leave_id=leave.id) }}" class="inline-form">
+                <select name="status" onchange="this.form.submit()">
+                  {% if leave.status == 'pending' %}
+                  <option value="pending" selected>En attente</option>
+                  <option value="approved">Approuve</option>
+                  <option value="rejected">Refuse</option>
+                  {% elif leave.status == 'approved' %}
+                  <option value="pending">En attente</option>
+                  <option value="approved" selected>Approuve</option>
+                  <option value="rejected">Refuse</option>
+                  {% else %}
+                  <option value="pending">En attente</option>
+                  <option value="approved">Approuve</option>
+                  <option value="rejected" selected>Refuse</option>
+                  {% endif %}
+                </select>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="empty-row">Aucune demande de congé.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+{% endblock %}

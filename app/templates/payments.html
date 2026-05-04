@@ -1,0 +1,123 @@
+{% extends "base.html" %} {% block title %}Paiements | EduManager{% endblock %} {% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Paiements</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+  </div>
+
+  {% if quick_flow and selected_family_id %}
+  <p class="text-muted">Etape 3/3 : enregistrez le paiement de la famille preselectionnee.</p>
+  {% endif %}
+
+  {% if can_access('admin', 'staff', 'manager') %}
+  <form method="post" class="form-grid">
+    {% if quick_flow %}
+    <input type="hidden" name="quick_flow" value="1" />
+    {% endif %}
+    <label>
+      Famille *
+      <select name="family_id" id="payment-family-select" required>
+        <option value="">— Sélectionner —</option>
+        {% for f in families %}
+        {% if selected_family_id == f.id %}
+        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}" selected>{{ f.display_name }}</option>
+        {% else %}
+        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}">{{ f.display_name }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Montant total (€) *
+      <input type="number" id="payment-total-amount" name="total_amount" min="0" step="0.01" value="{{ '%.2f'|format(default_total_amount) if default_total_amount is not none else '' }}" required />
+    </label>
+    <label>
+      Date
+      <input type="date" name="payment_date" />
+    </label>
+    <label>
+      Moyen de paiement
+      <select name="method">
+        <option value="">— Non précisé —</option>
+        <option value="CB">Carte bancaire</option>
+        <option value="ESP">Espèces</option>
+        <option value="CHQ">Chèque</option>
+      </select>
+    </label>
+    <label>
+      Nombre d'échéances (mensuelles)
+      <input type="number" name="installments_count" min="1" max="12" value="1" />
+      <small class="text-muted">Echéances générées au 10 de chaque mois à partir du mois suivant (août exclu).</small>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Créer un paiement</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="text-muted">Vous consultez vos paiements familiaux. Les creations et suppressions restent reservees a l'administration.</p>
+  {% endif %}
+</section>
+
+<section class="panel section-block">
+  <div class="section-head section-head-search">
+    <h2>Liste des paiements</h2>
+    <div class="section-actions-row">
+      {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='payments') }}">Exporter CSV</a>{% endif %}
+    <form method="get" class="search-form" role="search">
+      {% if selected_family_id %}<input type="hidden" name="family_id" value="{{ selected_family_id }}" />{% endif %}
+      {% if quick_flow %}<input type="hidden" name="quick_flow" value="1" />{% endif %}
+      <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher une famille..." />
+      <button class="btn btn-secondary" type="submit">Rechercher</button>
+      {% if search_query %}
+      <a class="btn btn-secondary" href="{{ url_for('main.payments_page', family_id=selected_family_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
+      {% endif %}
+    </form>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Famille</th>
+          <th>Montant total</th>
+          <th>Date</th>
+          <th>Moyen</th>
+          <th>Échéances</th>
+          <th>Réglé</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td>{% if p.family %}<a href="{{ url_for('main.family_detail', family_id=p.family.id) }}">{{ p.family.display_name }}</a>{% else %}—{% endif %}</td>
+          <td>{{ "%.2f"|format(p.total_amount) }} €</td>
+          <td>{{ p.payment_date.strftime('%d/%m/%Y') if p.payment_date else '—' }}</td>
+          <td>
+            {% if p.method == 'CB' %}Carte bancaire
+            {% elif p.method == 'ESP' %}Espèces
+            {% elif p.method == 'CHQ' %}Chèque
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ p.installments | length }}</td>
+          <td class="{% if p.remaining_amount <= 0 %}paid-full{% elif p.installments_total > 0 %}paid-partial{% else %}paid-none{% endif %}">
+            {{ "%.2f"|format(p.installments_total) }} €
+          </td>
+          <td class="td-actions">
+            <a class="btn btn-secondary" href="{{ url_for('main.payment_detail', payment_id=p.id) }}">Détail</a>
+            <a class="btn btn-secondary" href="{{ url_for('main.payment_receipt_pdf', payment_id=p.id) }}">PDF</a>
+            {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('main.delete_payment', payment_id=p.id) }}" onsubmit="return confirm('Supprimer ce paiement et ses échéances ?')">
+              <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
+            </form>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7">Aucun paiement.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = payments_pagination %}{% set endpoint_name = 'main.payments_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Postes | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head"><h1>Postes</h1><a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour</a></div>
+  <form method="post" class="form-grid compact-form">
+    <label>Titre<input type="text" name="title" required /></label>
+    <label>Description<input type="text" name="description" /></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
+  </form>
+</section>
+<section class="panel section-block">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Titre</th><th>Description</th><th>Employes</th><th></th></tr></thead>
+      <tbody>
+        {% for position in positions %}
+        <tr>
+          <td>{{ position.title }}</td><td>{{ position.description or '—' }}</td><td>{{ position.employees|length }}</td>
+          <td class="td-actions">
+            <details class="inline-details">
+              <summary class="btn btn-primary btn-sm">Modifier</summary>
+              <form method="post" action="{{ url_for('main.edit_position', position_id=position.id) }}" class="form-grid compact-form compact-card">
+                <label>Titre<input type="text" name="title" value="{{ position.title }}" required /></label>
+                <label>Description<input type="text" name="description" value="{{ position.description or '' }}" /></label>
+                <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div>
+              </form>
+            </details>
+            <form method="post" action="{{ url_for('main.delete_position', position_id=position.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce poste ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty-row">Aucun poste.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = positions_pagination %}{% set endpoint_name = 'main.positions_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Departements | EduManager{% endblock %}
+{% block content %}
+<section class="panel section-block">
+  <div class="section-head"><h1>Departements</h1><a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour</a></div>
+  <form method="post" class="form-grid compact-form">
+    <label>Nom<input type="text" name="name" required /></label>
+    <label>Manager
+      <select name="manager_id">
+        <option value="">Aucun</option>
+        {% for manager in managers %}<option value="{{ manager.id }}">{{ manager.full_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
+  </form>
+</section>
+<section class="panel section-block">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nom</th><th>Manager</th><th>Employes</th><th></th></tr></thead>
+      <tbody>
+        {% for department in departments %}
+        <tr>
+          <td>{{ department.name }}</td>
+          <td>{{ department.manager.full_name if department.manager else '—' }}</td>
+          <td>{{ department.employees|length }}</td>
+          <td class="td-actions">
+            <details class="inline-details">
+              <summary class="btn btn-primary btn-sm">Modifier</summary>
+              <form method="post" action="{{ url_for('main.edit_department', department_id=department.id) }}" class="form-grid compact-form compact-card">
+                <label>Nom<input type="text" name="name" value="{{ department.name }}" required /></label>
+                <label>Manager
+                  <select name="manager_id">
+                    <option value="">Aucun</option>
+                    {% for manager in managers %}
+                      {% if department.manager_id == manager.id %}
+                    <option value="{{ manager.id }}" selected>{{ manager.full_name }}</option>
+                      {% else %}
+                    <option value="{{ manager.id }}">{{ manager.full_name }}</option>
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                </label>
+                <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div>
+              </form>
+            </details>
+            <form method="post" action="{{ url_for('main.delete_department', department_id=department.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce département ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="empty-row">Aucun département.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = departments_pagination %}{% set endpoint_name = 'main.departments_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

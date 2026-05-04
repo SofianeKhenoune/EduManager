@@ -7,6 +7,9 @@
       >Retour au tableau de bord</a
     >
   </div>
+  <div class="section-actions-row">
+    <a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='employees') }}">Exporter CSV</a>
+  </div>
 
   <form method="post" class="form-grid">
     <label>
@@ -74,6 +77,7 @@
           <th>Email</th>
           <th>Code</th>
           <th>Département</th>
+          <th>Congés</th>
           <th></th>
         </tr>
       </thead>
@@ -86,21 +90,20 @@
           <td>
             {{ employee.department.name if employee.department else '-' }}
           </td>
+          <td>{{ employee.leave_requests | length }}</td>
           <td>
-            <a
-              class="btn btn-secondary"
-              href="{{ url_for('main.edit_employee', emp_id=employee.id) }}"
-              >Modifier</a
-            >
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.employee_detail', emp_id=employee.id) }}">Fiche</a>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_employee', emp_id=employee.id) }}">Modifier</a>
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5">Aucun employé pour le moment.</td>
+          <td colspan="6">Aucun employé pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% set pagination = employees_pagination %}{% set endpoint_name = 'main.employees_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

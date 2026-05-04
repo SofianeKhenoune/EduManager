@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connexion – EduManager</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <style>
+      .login-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg, #f5f5f0);
+      }
+      .login-card {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 2.5rem 2rem;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      }
+      .login-brand {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: 1.8rem;
+        font-family: 'Fraunces', serif;
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+      .login-brand .brand-badge {
+        background: #1a1a2e;
+        color: #fff;
+        border-radius: .4rem;
+        padding: .2rem .5rem;
+        font-size: 1rem;
+        font-family: 'Space Grotesk', sans-serif;
+      }
+      .login-card h1 {
+        font-size: 1.15rem;
+        margin-bottom: 1.4rem;
+        font-weight: 600;
+      }
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        display: block;
+        font-size: .85rem;
+        font-weight: 500;
+        margin-bottom: .35rem;
+      }
+      .form-group input {
+        width: 100%;
+        padding: .55rem .75rem;
+        border: 1.5px solid #ddd;
+        border-radius: .5rem;
+        font-size: .95rem;
+        font-family: inherit;
+        box-sizing: border-box;
+        transition: border-color .15s;
+      }
+      .form-group input:focus {
+        outline: none;
+        border-color: #1a1a2e;
+      }
+      .remember-row {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .88rem;
+        margin-bottom: 1.4rem;
+      }
+      .btn-login {
+        width: 100%;
+        padding: .65rem;
+        background: #1a1a2e;
+        color: #fff;
+        border: none;
+        border-radius: .5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .15s;
+      }
+      .btn-login:hover { background: #2d2d50; }
+      .flash-stack { margin-bottom: 1rem; }
+      .flash-item {
+        padding: .55rem .85rem;
+        border-radius: .45rem;
+        font-size: .88rem;
+        margin-bottom: .5rem;
+      }
+      .flash-danger { background: #fde8e8; color: #c0392b; }
+      .flash-warning { background: #fff3cd; color: #856404; }
+      .flash-success { background: #d4edda; color: #155724; }
+    </style>
+  </head>
+  <body>
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-brand">
+          <span class="brand-badge">EM</span>
+          <span>EduManager</span>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+          <div class="flash-item flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <h1>Connexion administrateur</h1>
+        <form method="post">
+          <div class="form-group">
+            <label for="email">Adresse e-mail</label>
+            <input type="email" id="email" name="email" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required />
+          </div>
+          <div class="remember-row">
+            <input type="checkbox" id="remember" name="remember" value="1" />
+            <label for="remember">Rester connecté</label>
+          </div>
+          <button type="submit" class="btn-login">Se connecter</button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Configuration du paiement | EduManager{% endblock %}
+{% block content %}
+
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Configuration du paiement</h1>
+    <span class="text-muted">Famille : <strong>{{ payment.family.display_name if payment.family else '—' }}</strong></span>
+  </div>
+
+  <p class="text-muted" style="margin-bottom:1.2rem;">
+    Étape finale : définissez le montant total et le nombre d'échéances. Les montants et dates sont calculés automatiquement.
+  </p>
+
+  <form method="post" id="payment-setup-form" class="form-grid">
+
+    <label>
+      Montant total (€) *
+      <input
+        type="number"
+        name="total_amount"
+        id="total-amount"
+        min="0"
+        step="0.01"
+        value="{{ '%.2f'|format(default_amount) }}"
+        required
+      />
+    </label>
+
+    <label>
+      Date du premier versement *
+      <input
+        type="text"
+        name="payment_date"
+        id="payment-date"
+        placeholder="jj/mm/aaaa"
+        value="{{ payment.payment_date.strftime('%d/%m/%Y') if payment.payment_date else '' }}"
+        required
+      />
+    </label>
+
+    <label>
+      Nombre d'échéances *
+      <select name="installments_count" id="installments-count">
+        {% for n in range(1, 7) %}
+        <option value="{{ n }}" {% if n == 1 %}selected{% endif %}>{{ n }} échéance{{ 's' if n > 1 else '' }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <!-- Installment rows injected by JS -->
+    <div id="installment-rows" style="display:none; grid-column: 1 / -1;">
+      <h3 style="margin-top:1.2rem; margin-bottom:0.8rem;">Détail des échéances</h3>
+      <div class="table-wrap">
+        <table id="installment-table">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Montant (€)</th>
+              <th>Date prévue</th>
+              <th>Moyen de paiement</th>
+            </tr>
+          </thead>
+          <tbody id="installment-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="form-actions" style="grid-column: 1 / -1;">
+      <button class="btn btn-primary" type="submit">Enregistrer le paiement</button>
+      <a class="btn btn-secondary" href="{{ url_for('main.payment_detail', payment_id=payment.id) }}">Ignorer cette étape</a>
+    </div>
+  </form>
+</section>
+
+<script>
+(function () {
+  const countSel   = document.getElementById('installments-count');
+  const totalInput = document.getElementById('total-amount');
+  const dateInput  = document.getElementById('payment-date');
+  const rowsDiv    = document.getElementById('installment-rows');
+  const tbody      = document.getElementById('installment-tbody');
+
+  // Skip August, always set day=10
+  function nextDueDate(base, offset) {
+    let y = base.getFullYear();
+    let m = base.getMonth(); // 0-indexed
+    for (let i = 0; i < offset; i++) {
+      m += 1;
+      if (m > 11) { m = 0; y += 1; }
+      if (m === 7) { m = 8; } // skip August → September
+    }
+    return new Date(y, m, 10);
+  }
+
+  function toFrDate(d) {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = d.getFullYear();
+    return `${dd}/${mm}/${yy}`;
+  }
+
+  function calcAmounts(totalCents, n) {
+    const base = Math.floor(totalCents / n);
+    const rem  = totalCents % n;
+    return Array.from({ length: n }, (_, i) => ((base + (i < rem ? 1 : 0)) / 100).toFixed(2));
+  }
+
+  function renderRows() {
+    const n = parseInt(countSel.value, 10);
+    const total = parseFloat(totalInput.value) || 0;
+    const rawDate = dateInput.value.trim();
+
+    if (n <= 1) {
+      rowsDiv.style.display = 'none';
+      tbody.innerHTML = '';
+      return;
+    }
+
+    rowsDiv.style.display = '';
+    const totalCents = Math.round(total * 100);
+    const amounts = calcAmounts(totalCents, n);
+    // Parse dd/mm/yyyy or yyyy-mm-dd
+    let baseDate;
+    if (rawDate) {
+      const parts = rawDate.includes('/') ? rawDate.split('/') : rawDate.split('-').reverse();
+      baseDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    } else {
+      baseDate = new Date();
+    }
+
+    tbody.innerHTML = '';
+    for (let i = 1; i <= n; i++) {
+      const due = (i === 1) ? baseDate : nextDueDate(baseDate, i - 1);
+      const amt = amounts[i - 1];
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${i}</td>
+          <td><input type="number" name="inst_${i}_amount" value="${amt}" min="0" step="0.01" style="width:7rem;" /></td>
+          <td><input type="text" name="inst_${i}_date" value="${toFrDate(due)}" placeholder="jj/mm/aaaa" style="width:8rem;" /></td>
+          <td>
+            <select name="inst_${i}_method">
+              <option value="">— Prévision —</option>
+              <option value="CB">Carte bancaire</option>
+              <option value="ESP">Espèces</option>
+              <option value="CHQ">Chèque</option>
+            </select>
+          </td>
+        </tr>
+      `);
+    }
+  }
+
+  countSel.addEventListener('change', renderRows);
+  totalInput.addEventListener('input', renderRows);
+  dateInput.addEventListener('change', renderRows);
+
+  // Initial render
+  renderRows();
+})();
+</script>
+{% endblock %}
