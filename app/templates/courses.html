@@ -7,13 +7,16 @@
     >
   </div>
   <div class="section-actions-row">
+    <form method="post" action="{{ url_for('main.delete_all_courses') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les cours ? Les séances et inscriptions associées seront également supprimées. Cette action est irréversible.')">
+      <button class="btn btn-danger" type="submit">Supprimer tous les cours</button>
+    </form>
     <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Vue planning</a>
   </div>
 
   <form method="post" class="form-grid">
     <label>
       Titre *
-      <input type="text" name="title" required />
+      <input type="text" name="title" autocomplete="off" required />
     </label>
     <label>
       Enseignant *
@@ -23,6 +26,15 @@
         <option value="{{ teacher.id }}">
           {{ teacher.user.first_name }} {{ teacher.user.last_name }}
         </option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Bénévole (optionnel)
+      <select name="volunteer_id">
+        <option value="">Aucun</option>
+        {% for volunteer in volunteers %}
+        <option value="{{ volunteer.id }}">{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</option>
         {% endfor %}
       </select>
     </label>
@@ -64,27 +76,31 @@
     </label>
     <label>
       Créneau
-      <select name="time_slot">
+      <select name="time_slot" class="time-slot-select">
         <option value="">Aucun</option>
-        <option>matin</option>
-        <option>après-midi</option>
+        <option value="matin">matin (9:00-12:15)</option>
+        <option value="après-midi">après-midi (13:45-17:00)</option>
       </select>
     </label>
     <label>
       Description
-      <input type="text" name="description" />
+      <input type="text" name="description" autocomplete="off" />
     </label>
     <label>
       Heure de début
-      <input type="number" min="0" max="23" name="start_hour" />
+      <input type="time" name="start_time" class="start-time-input" />
+      <input type="hidden" name="start_hour" class="start-hour-input" />
+      <input type="hidden" name="start_minute" class="start-minute-input" />
     </label>
     <label>
       Heure de fin
-      <input type="number" min="0" max="23" name="end_hour" />
+      <input type="time" name="end_time" class="end-time-input" />
+      <input type="hidden" name="end_hour" class="end-hour-input" />
+      <input type="hidden" name="end_minute" class="end-minute-input" />
     </label>
     <label>
       Salle
-      <input type="text" name="room" />
+      <input type="text" name="room" autocomplete="off" />
     </label>
     <label>
       Capacite
@@ -104,6 +120,7 @@
         <tr>
           <th>Titre</th>
           <th>Enseignant</th>
+          <th>Bénévole</th>
           <th>Site</th>
           <th>Jour</th>
           <th>Capacite</th>
@@ -119,6 +136,13 @@
           <td>
             {{ course.teacher.user.first_name }} {{
             course.teacher.user.last_name }}
+          </td>
+          <td>
+            {% if course.volunteer %}
+              {{ course.volunteer.user.first_name }} {{ course.volunteer.user.last_name }}
+            {% else %}
+              -
+            {% endif %}
           </td>
           <td>{{ course.site.name if course.site else '-' }}</td>
           <td>{{ course.day or '-' }}</td>
@@ -136,7 +160,7 @@
         </tr>
         {% else %}
         <tr>
-          <td colspan="8">Aucun cours pour le moment.</td>
+          <td colspan="9">Aucun cours pour le moment.</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -94,7 +94,7 @@
       <tbody>
         {% for cs in all_sessions | sort(attribute='session_date', reverse=True) %}
         <tr>
-          <td>{{ cs.session_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ cs.session_date.strftime('%d-%m-%Y') }}</td>
           <td>{{ cs.topic or '—' }}</td>
           <td>
             {% if cs.status == 'completed' %}<span class="badge badge-success">Réalisée</span>
@@ -131,7 +131,7 @@
         {% for cat in assessment_categories %}<option value="{{ cat }}">{{ cat }}</option>{% endfor %}
       </select>
     </label>
-    <label>Date<input type="date" name="assessment_date" value="{{ today.strftime('%Y-%m-%d') }}" /></label>
+    <label>Date<input type="text" name="assessment_date" class="fr-date-input" value="{{ today.strftime('%d-%m-%Y') }}" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" /></label>
     <label>Score<input type="number" step="0.5" min="0" name="score" /></label>
     <label>Note max<input type="number" step="0.5" min="1" name="max_score" value="20" /></label>
     <label class="full-span">Appréciation / Observation<textarea name="appreciation" rows="2" placeholder="Facultatif — pour comportement, participation..."></textarea></label>
@@ -149,7 +149,7 @@
       <tbody>
         {% for a in evals %}
         <tr>
-          <td>{{ a.assessment_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ a.assessment_date.strftime('%d-%m-%Y') }}</td>
           <td>{{ a.category }}</td>
           <td>
             {% if a.score is not none %}

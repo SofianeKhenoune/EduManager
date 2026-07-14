@@ -33,6 +33,7 @@ from app.models import (
     StudentAssessment,
     Teacher,
     User,
+    Volunteer,
     TARIF_GRID,
     calc_tarif,
 )
@@ -53,10 +54,14 @@ except ImportError:
 main_bp = Blueprint("main", __name__)
 
 ADMIN_ROLES = ("admin", "staff", "manager")
-PEDAGOGY_ROLES = ("admin", "staff", "manager", "teacher")
+PEDAGOGY_ROLES = ("admin", "staff", "manager", "teacher", "volunteer")
 PARENT_ROLES = ("parent",)
 WEEKDAY_ORDER = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 PER_PAGE = 12
+TIME_SLOTS = {
+    "matin": {"start": 9, "end": 12, "start_min": 0, "end_min": 15},
+    "après-midi": {"start": 13, "end": 17, "start_min": 45, "end_min": 0},
+}
 
 
 def roles_required(*role_names: str):
@@ -322,6 +327,7 @@ def forbidden(_error):
 
 
 @main_bp.route("/")
+@roles_required(*ADMIN_ROLES)
 def index():
     if not current_user.is_authenticated:
         return render_template("index.html")
@@ -597,6 +603,33 @@ def api_kpis():
 @login_required
 @roles_required(*ADMIN_ROLES)
 def students_page():
+    query = request.args.get("q", "").strip()
+
+    def render_students_page():
+        students_query = Student.query
+        if query:
+            like_query = f"%{query}%"
+            students_query = students_query.filter(
+                or_(
+                    Student.first_name.ilike(like_query),
+                    Student.last_name.ilike(like_query),
+                )
+            )
+
+        students_pagination = _paginate(students_query.order_by(Student.last_name.asc(), Student.first_name.asc()))
+        sites = Site.query.order_by(Site.name.asc()).all()
+        families = Family.query.order_by(Family.father_last_name.asc()).all()
+
+        return render_template(
+            "students.html",
+            students=students_pagination.items,
+            students_pagination=students_pagination,
+            sites=sites,
+            families=families,
+            default_school_year=_default_school_year(),
+            search_query=query,
+        )
+
     if request.method == "POST":
         try:
             first_name = request.form.get("first_name", "").strip()
@@ -610,7 +643,7 @@ def students_page():
 
             if not all([first_name, last_name, birth_date, gender]) or site_id is None:
                 flash("Prénom, nom, date de naissance, genre et site sont obligatoires.", "warning")
-                return redirect(url_for("main.students_page"))
+                return render_students_page()
 
             parsed_birth = _parse_date(birth_date)
             cutoff = date(date.today().year, 10, 1)
@@ -618,7 +651,7 @@ def students_page():
             force_underage = request.form.get("force_underage") == "1"
             if age_on_cutoff < 6 and not force_underage:
                 flash("L'élève doit avoir au moins 6 ans au 1er octobre de l'année en cours.", "warning")
-                return redirect(url_for("main.students_page"))
+                return render_students_page()
             if age_on_cutoff < 6 and force_underage:
                 flash("Inscription en dessous de l'âge recommandée (validation forcée).", "warning")
 
@@ -651,15 +684,15 @@ def students_page():
                     zip_code,
                 ]) or address_number is None:
                     flash("Pour une nouvelle famille, tarif, année scolaire, parents et adresse complète sont obligatoires.", "warning")
-                    return redirect(url_for("main.students_page"))
+                    return render_students_page()
 
                 if not (father_email or mother_email):
                     flash("Au moins un e-mail parent est obligatoire.", "warning")
-                    return redirect(url_for("main.students_page"))
+                    return render_students_page()
 
                 if not (father_phone or mother_phone):
                     flash("Au moins un numéro de téléphone parent est obligatoire.", "warning")
-                    return redirect(url_for("main.students_page"))
+                    return render_students_page()
 
                 family = Family(
                     school_year=school_year,
@@ -695,34 +728,33 @@ def students_page():
             db.session.commit()
             flash("Élève ajouté avec succès.", "success")
             return redirect(url_for("main.enrollments_page", student_id=student.id, quick_flow=1))
-        except (ValueError, IntegrityError):
+        except ValueError as exc:
             db.session.rollback()
-            flash("Impossible d'ajouter l'élève. Vérifiez les données saisies.", "danger")
-        return redirect(url_for("main.students_page"))
+            flash(f"Impossible d'ajouter l'élève : {exc}", "danger")
+        except IntegrityError as exc:
+            db.session.rollback()
+            raw_error = str(getattr(exc, "orig", exc))
+            lower_error = raw_error.lower()
 
-    query = request.args.get("q", "").strip()
-    students_query = Student.query
-    if query:
-        like_query = f"%{query}%"
-        students_query = students_query.filter(
-            or_(
-                Student.first_name.ilike(like_query),
-                Student.last_name.ilike(like_query),
-            )
-        )
-    students_pagination = _paginate(students_query.order_by(Student.last_name.asc(), Student.first_name.asc()))
-    sites = Site.query.order_by(Site.name.asc()).all()
-    families = Family.query.order_by(Family.father_last_name.asc()).all()
-    default_school_year = _default_school_year()
-    return render_template(
-        "students.html",
-        students=students_pagination.items,
-        students_pagination=students_pagination,
-        sites=sites,
-        families=families,
-        default_school_year=default_school_year,
-        search_query=query,
-    )
+            if "check_student_gender" in lower_error:
+                detail = "le genre doit être M ou F"
+            elif "students.birth_date" in lower_error and "not null" in lower_error:
+                detail = "la date de naissance est obligatoire"
+            elif "students.first_name" in lower_error and "not null" in lower_error:
+                detail = "le prénom est obligatoire"
+            elif "students.last_name" in lower_error and "not null" in lower_error:
+                detail = "le nom est obligatoire"
+            elif "students.site_id" in lower_error and "foreign key" in lower_error:
+                detail = "le site sélectionné est invalide"
+            elif "students.family_id" in lower_error and "foreign key" in lower_error:
+                detail = "la famille sélectionnée est invalide"
+            else:
+                detail = raw_error
+
+            flash(f"Impossible d'ajouter l'élève : {detail}", "danger")
+        return render_students_page()
+
+    return render_students_page()
 
 
 @main_bp.route("/students/<int:student_id>/edit", methods=["GET", "POST"])
@@ -787,20 +819,32 @@ def delete_student(student_id):
 def teachers_page():
     if request.method == "POST":
         try:
-            first_name = request.form.get("first_name", "").strip()
-            last_name = request.form.get("last_name", "").strip()
-            email = request.form.get("email", "").strip().lower()
-            password = request.form.get("password", "").strip()
+            teacher_origin = request.form.get("teacher_origin", "").strip()
+            employee_id = _optional_int(request.form.get("employee_id"))
+            volunteer_id = _optional_int(request.form.get("volunteer_id"))
             subject = request.form.get("subject", "").strip()
 
-            if not all([first_name, last_name, email, password]):
-                flash("Les champs prenom, nom, adresse e-mail et mot de passe sont obligatoires.", "warning")
-                return redirect(url_for("main.teachers_page"))
-
-            user, error = _create_user(first_name, last_name, email, password, "teacher")
-            if error:
-                db.session.rollback()
-                flash(error, "warning")
+            user = None
+            if teacher_origin == "employee":
+                employee = Employee.query.get(employee_id) if employee_id else None
+                if employee is None:
+                    flash("Veuillez sélectionner un salarié valide.", "warning")
+                    return redirect(url_for("main.teachers_page"))
+                if employee.user.teacher is not None:
+                    flash("Ce salarié est déjà enseignant.", "warning")
+                    return redirect(url_for("main.teachers_page"))
+                user = employee.user
+            elif teacher_origin == "volunteer":
+                volunteer = Volunteer.query.get(volunteer_id) if volunteer_id else None
+                if volunteer is None:
+                    flash("Veuillez sélectionner un bénévole valide.", "warning")
+                    return redirect(url_for("main.teachers_page"))
+                if volunteer.user.teacher is not None:
+                    flash("Ce bénévole est déjà enseignant.", "warning")
+                    return redirect(url_for("main.teachers_page"))
+                user = volunteer.user
+            else:
+                flash("Un enseignant doit être un salarié ou un bénévole existant.", "warning")
                 return redirect(url_for("main.teachers_page"))
 
             teacher = Teacher(user_id=user.id, subject=subject or None)
@@ -814,7 +858,27 @@ def teachers_page():
         return redirect(url_for("main.teachers_page"))
 
     teachers_pagination = _paginate(Teacher.query.join(User, Teacher.user_id == User.id).order_by(User.last_name.asc()))
-    return render_template("teachers.html", teachers=teachers_pagination.items, teachers_pagination=teachers_pagination)
+    available_employees = (
+        Employee.query.join(User, Employee.user_id == User.id)
+        .outerjoin(Teacher, Teacher.user_id == User.id)
+        .filter(Teacher.id.is_(None))
+        .order_by(User.last_name.asc(), User.first_name.asc())
+        .all()
+    )
+    available_volunteers = (
+        Volunteer.query.join(User, Volunteer.user_id == User.id)
+        .outerjoin(Teacher, Teacher.user_id == User.id)
+        .filter(Teacher.id.is_(None))
+        .order_by(User.last_name.asc(), User.first_name.asc())
+        .all()
+    )
+    return render_template(
+        "teachers.html",
+        teachers=teachers_pagination.items,
+        teachers_pagination=teachers_pagination,
+        available_employees=available_employees,
+        available_volunteers=available_volunteers,
+    )
 
 
 @main_bp.route("/teachers/<int:teacher_id>/edit", methods=["GET", "POST"])
@@ -854,10 +918,115 @@ def delete_teacher(teacher_id):
         return redirect(url_for("main.teachers_page"))
     user = teacher.user
     db.session.delete(teacher)
-    db.session.delete(user)
+    if user and user.employee is None and user.volunteer is None:
+        db.session.delete(user)
     db.session.commit()
     flash("Enseignant supprime.", "success")
     return redirect(url_for("main.teachers_page"))
+
+
+@main_bp.route("/teachers/delete-all", methods=["POST"])
+@login_required
+@roles_required(*ADMIN_ROLES)
+def delete_all_teachers():
+    teachers = Teacher.query.all()
+    skipped = 0
+    deleted = 0
+    for teacher in teachers:
+        if teacher.courses:
+            skipped += 1
+            continue
+        user = teacher.user
+        db.session.delete(teacher)
+        if user and user.employee is None and user.volunteer is None:
+            db.session.delete(user)
+        deleted += 1
+    db.session.commit()
+    if skipped:
+        flash(f"{deleted} enseignant(s) supprimé(s). {skipped} ignoré(s) car affecté(s) à des cours.", "warning")
+    else:
+        flash(f"{deleted} enseignant(s) supprimé(s).", "success")
+    return redirect(url_for("main.teachers_page"))
+
+
+@main_bp.route("/volunteers", methods=["GET", "POST"])
+@login_required
+@roles_required(*ADMIN_ROLES)
+def volunteers_page():
+    if request.method == "POST":
+        try:
+            first_name = request.form.get("first_name", "").strip()
+            last_name = request.form.get("last_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "").strip()
+            skills = request.form.get("skills", "").strip()
+
+            if not all([first_name, last_name, email, password]):
+                flash("Les champs prenom, nom, adresse e-mail et mot de passe sont obligatoires.", "warning")
+                return redirect(url_for("main.volunteers_page"))
+
+            user, error = _create_user(first_name, last_name, email, password, "volunteer")
+            if error:
+                db.session.rollback()
+                flash(error, "warning")
+                return redirect(url_for("main.volunteers_page"))
+
+            volunteer = Volunteer(user_id=user.id, skills=skills or None)
+            db.session.add(volunteer)
+            db.session.commit()
+            flash("Bénévole ajouté avec succès.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Impossible d'ajouter le bénévole.", "danger")
+
+        return redirect(url_for("main.volunteers_page"))
+
+    volunteers_pagination = _paginate(Volunteer.query.join(User, Volunteer.user_id == User.id).order_by(User.last_name.asc()))
+    return render_template("volunteers.html", volunteers=volunteers_pagination.items, volunteers_pagination=volunteers_pagination)
+
+
+@main_bp.route("/volunteers/<int:volunteer_id>/edit", methods=["GET", "POST"])
+@login_required
+@roles_required(*ADMIN_ROLES)
+def edit_volunteer(volunteer_id):
+    volunteer = Volunteer.query.get_or_404(volunteer_id)
+    if request.method == "POST":
+        try:
+            volunteer.user.first_name = request.form.get("first_name", "").strip()
+            volunteer.user.last_name = request.form.get("last_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            if email != volunteer.user.email:
+                existing = User.query.filter_by(email=email).first()
+                if existing:
+                    flash("Cette adresse e-mail est déjà utilisee.", "warning")
+                    return redirect(url_for("main.edit_volunteer", volunteer_id=volunteer_id))
+                volunteer.user.email = email
+            volunteer.skills = request.form.get("skills", "").strip() or None
+            volunteer.availability = request.form.get("availability", "").strip() or None
+            db.session.commit()
+            flash("Bénévole mis à jour.", "success")
+        except (ValueError, IntegrityError):
+            db.session.rollback()
+            flash("Erreur lors de la mise à jour.", "danger")
+        return redirect(url_for("main.edit_volunteer", volunteer_id=volunteer_id))
+
+    return render_template("edit_volunteer.html", volunteer=volunteer)
+
+
+@main_bp.route("/volunteers/<int:volunteer_id>/delete", methods=["POST"])
+@login_required
+@roles_required(*ADMIN_ROLES)
+def delete_volunteer(volunteer_id):
+    volunteer = Volunteer.query.get_or_404(volunteer_id)
+    if volunteer.courses:
+        flash("Impossible de supprimer ce bénévole : il est affecté a des cours.", "warning")
+        return redirect(url_for("main.volunteers_page"))
+    user = volunteer.user
+    db.session.delete(volunteer)
+    db.session.delete(user)
+    db.session.commit()
+    flash("Bénévole supprime.", "success")
+    return redirect(url_for("main.volunteers_page"))
 
 
 @main_bp.route("/employees", methods=["GET", "POST"])
@@ -1237,10 +1406,12 @@ def courses_page():
                 flash("Le titre du cours et l'enseignant sont obligatoires.", "warning")
                 return redirect(url_for("main.courses_page"))
 
+            volunteer_id = _optional_int(request.form.get("volunteer_id"))
             course = Course(
                 title=title,
                 description=request.form.get("description", "").strip() or None,
                 teacher_id=teacher_id,
+                volunteer_id=volunteer_id,
                 site_id=site_id,
                 level=level,
                 day=day,
@@ -1266,12 +1437,14 @@ def courses_page():
             courses_query = courses_query.filter(Course.teacher_id == teacher.id)
     courses_pagination = _paginate(courses_query.order_by(Course.id.desc()))
     teachers = Teacher.query.join(User, Teacher.user_id == User.id).order_by(User.last_name.asc()).all()
+    volunteers = Volunteer.query.join(User, Volunteer.user_id == User.id).order_by(User.last_name.asc()).all()
     sites = Site.query.order_by(Site.name.asc()).all()
     return render_template(
         "courses.html",
         courses=courses_pagination.items,
         courses_pagination=courses_pagination,
         teachers=teachers,
+        volunteers=volunteers,
         sites=sites,
     )
 
@@ -1290,6 +1463,7 @@ def edit_course(course_id):
                 flash("L'enseignant est obligatoire.", "warning")
                 return redirect(url_for("main.edit_course", course_id=course_id))
             course.teacher_id = teacher_id
+            course.volunteer_id = _optional_int(request.form.get("volunteer_id"))
             course.site_id = _optional_int(request.form.get("site_id"))
             course.level = request.form.get("level", "").strip() or None
             course.day = request.form.get("day", "").strip() or None
@@ -1306,8 +1480,9 @@ def edit_course(course_id):
         return redirect(url_for("main.edit_course", course_id=course_id))
 
     teachers = Teacher.query.join(User, Teacher.user_id == User.id).order_by(User.last_name.asc()).all()
+    volunteers = Volunteer.query.join(User, Volunteer.user_id == User.id).order_by(User.last_name.asc()).all()
     sites = Site.query.order_by(Site.name.asc()).all()
-    return render_template("edit_course.html", course=course, teachers=teachers, sites=sites)
+    return render_template("edit_course.html", course=course, teachers=teachers, volunteers=volunteers, sites=sites)
 
 
 @main_bp.route("/courses/<int:course_id>/delete", methods=["POST"])
@@ -1318,6 +1493,19 @@ def delete_course(course_id):
     db.session.delete(course)
     db.session.commit()
     flash("Cours supprime.", "success")
+    return redirect(url_for("main.courses_page"))
+
+
+@main_bp.route("/courses/delete-all", methods=["POST"])
+@login_required
+@roles_required(*ADMIN_ROLES)
+def delete_all_courses():
+    courses = Course.query.all()
+    deleted = len(courses)
+    for course in courses:
+        db.session.delete(course)
+    db.session.commit()
+    flash(f"{deleted} cours supprimé(s).", "success")
     return redirect(url_for("main.courses_page"))
 
 
@@ -1356,6 +1544,8 @@ def planning_page():
         schedule[course.day or "non_planifie"].append(course)
     teacher_course_ids = {c.id for c in courses}
     sessions_query = CourseSession.query.join(Course).order_by(CourseSession.session_date.asc())
+    if site_filter:
+        sessions_query = sessions_query.filter(Course.site_id == site_filter)
     if current_user.has_role("teacher") and teacher_course_ids:
         sessions_query = sessions_query.filter(CourseSession.course_id.in_(teacher_course_ids))
     sessions = sessions_query.limit(20).all()
@@ -1946,7 +2136,20 @@ def payment_detail(payment_id):
     payment = Payment.query.get_or_404(payment_id)
     if not _family_access_allowed(payment.family):
         abort(403)
-    return render_template("payment_detail.html", payment=payment, today=date.today().isoformat())
+    today = date.today()
+    locked_installment_ids = set()
+    if not current_user.has_role("admin", "manager"):
+        locked_installment_ids = {
+            inst.id
+            for inst in payment.installments
+            if inst.id is not None and inst.payment_date is not None and inst.payment_date < today
+        }
+    return render_template(
+        "payment_detail.html",
+        payment=payment,
+        today=today,
+        locked_installment_ids=locked_installment_ids,
+    )
 
 
 @main_bp.route("/payment-setup/<int:payment_id>", methods=["GET", "POST"])
@@ -2050,6 +2253,14 @@ def edit_installment(payment_id, installment_id):
     payment = Payment.query.get_or_404(payment_id)
     installment = PaymentInstallment.query.filter_by(id=installment_id, payment_id=payment_id).first_or_404()
 
+    is_past_installment = installment.payment_date is not None and installment.payment_date < date.today()
+    if is_past_installment and not current_user.has_role("admin", "manager"):
+        flash(
+            "Les échéances passées ne peuvent être modifiées que par un administrateur ou un manager.",
+            "warning",
+        )
+        return redirect(url_for("main.payment_detail", payment_id=payment_id))
+
     new_amount = _optional_float(request.form.get("amount"))
     new_method = request.form.get("method", "").strip() or None
     payment_date_raw = request.form.get("payment_date", "").strip()
@@ -2068,8 +2279,33 @@ def edit_installment(payment_id, installment_id):
     installment.amount = new_amount
     installment.method = new_method
     installment.payment_date = new_payment_date
+
+    # Keep the edited installment amount and rebalance remaining forecast installments.
+    all_installments = sorted(payment.installments, key=lambda i: i.installment_number or 0)
+    total_cents = int(round(float(payment.total_amount or 0) * 100))
+    fixed_total_cents = 0
+    floating_installments = []
+
+    for inst in all_installments:
+        inst_cents = int(round(float(inst.amount or 0) * 100))
+        if inst.id == installment.id or inst.method:
+            fixed_total_cents += inst_cents
+        else:
+            floating_installments.append(inst)
+
+    remaining_cents = max(total_cents - fixed_total_cents, 0)
+    if floating_installments:
+        base_cents = remaining_cents // len(floating_installments)
+        remainder = remaining_cents % len(floating_installments)
+        for idx, inst in enumerate(floating_installments):
+            cents = base_cents + (1 if idx < remainder else 0)
+            inst.amount = round(cents / 100, 2)
+
     db.session.commit()
-    flash("Echeance mise à jour.", "success")
+    if floating_installments:
+        flash("Echeance mise à jour. Les autres échéances prévisionnelles ont été recalculées.", "success")
+    else:
+        flash("Echeance mise à jour.", "success")
     return redirect(url_for("main.payment_detail", payment_id=payment_id))
 
 
@@ -2078,6 +2314,15 @@ def edit_installment(payment_id, installment_id):
 @roles_required(*ADMIN_ROLES)
 def delete_installment(payment_id, installment_id):
     installment = PaymentInstallment.query.filter_by(id=installment_id, payment_id=payment_id).first_or_404()
+    is_past_installment = installment.payment_date is not None and installment.payment_date < date.today()
+    if is_past_installment and not current_user.has_role("admin", "manager"):
+        flash(
+            "Les échéances passées ne peuvent être supprimées que par un administrateur ou un manager.",
+            "warning",
+        )
+        return redirect(url_for("main.payment_detail", payment_id=payment_id))
+    if installment.method and not current_user.has_role("admin", "manager"):
+        abort(403)
     db.session.delete(installment)
     db.session.commit()
     flash("Echeance supprimée.", "success")
@@ -2188,8 +2433,8 @@ def payment_receipt_pdf(payment_id):
         parent_email = ""
         if payment.family:
             parent_email = payment.family.father_email or payment.family.mother_email or ""
-        payment_date_str = payment.payment_date.strftime("%d/%m/%Y") if payment.payment_date else "Non renseignée"
-        issue_date_str = date.today().strftime("%d/%m/%Y")
+        payment_date_str = payment.payment_date.strftime("%d-%m-%Y") if payment.payment_date else "Non renseignée"
+        issue_date_str = date.today().strftime("%d-%m-%Y")
         installments = payment.installments
         label_col = 55 * mm
         method_labels = {"CB": "Carte bancaire", "ESP": "Espèces", "CHQ": "Chèque"}
@@ -2252,7 +2497,7 @@ def payment_receipt_pdf(payment_id):
                 vals = [
                     str(inst.installment_number),
                     f"{float(inst.amount):.2f} €",
-                    inst.payment_date.strftime("%d/%m/%Y") if inst.payment_date else "—",
+                    inst.payment_date.strftime("%d-%m-%Y") if inst.payment_date else "—",
                     method_labels.get(inst.method, "Prévision") if inst.method else "Prévision",
                 ]
                 x = margin + 2 * mm
@@ -2270,7 +2515,22 @@ def payment_receipt_pdf(payment_id):
         )
         pdf.setFillColorRGB(0, 0, 0)
 
-    return _render_pdf(f"reçu-paiement-{payment.id}.pdf", draw)
+    family_last_name = ""
+    if payment.family:
+        family_last_name = (
+            payment.family.father_last_name
+            or payment.family.mother_last_name
+            or (payment.family.students[0].last_name if payment.family.students else "")
+        )
+
+    school_year_token = payment.family.school_year if payment.family and payment.family.school_year else "annee_scolaire"
+    download_date_token = date.today().strftime("%Y-%m-%d")
+    filename = (
+        f"{_filename_token(family_last_name, fallback='famille').upper()}_"
+        f"{_filename_token(school_year_token)}_"
+        f"{_filename_token(download_date_token)}.pdf"
+    )
+    return _render_pdf(filename, draw)
 
 
 @main_bp.route("/documents/students/<int:student_id>/attestation.pdf")
@@ -2288,7 +2548,7 @@ def student_certificate_pdf(student_id):
 
     def draw(pdf, width, height):
         margin = preset["margin_mm"] * mm
-        issue_date_str = date.today().strftime("%d/%m/%Y")
+        issue_date_str = date.today().strftime("%d-%m-%Y")
         pdf.setTitle(f"Attestation d'inscription – {student.full_name}")
         y = _pdf_draw_header(pdf, width, height, preset)
 
@@ -2305,7 +2565,7 @@ def student_certificate_pdf(student_id):
         y -= 12 * mm
 
         cert_ref = f"ATT-{student.id:05d}-{date.today().strftime('%Y%m%d')}"
-        birth_str = student.birth_date.strftime("%d/%m/%Y") if student.birth_date else "Non renseignée"
+        birth_str = student.birth_date.strftime("%d-%m-%Y") if student.birth_date else "Non renseignée"
         gender_label = "Garçon" if student.gender == "M" else ("Fille" if student.gender == "F" else "Non renseigné")
         reinscription_label = "Oui" if student.is_reinscription else "Non"
         age_label = str(student.age) if student.age is not None else "N/A"

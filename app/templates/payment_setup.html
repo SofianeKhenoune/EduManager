@@ -31,10 +31,12 @@
       Date du premier versement *
       <input
         type="text"
+        class="fr-date-input"
         name="payment_date"
         id="payment-date"
-        placeholder="jj/mm/aaaa"
-        value="{{ payment.payment_date.strftime('%d/%m/%Y') if payment.payment_date else '' }}"
+        placeholder="JJ-MM-AAAA"
+        value="{{ payment.payment_date.strftime('%d-%m-%Y') if payment.payment_date else '' }}"
+        pattern="^\d{2}[-/]\d{2}[-/]\d{4}$"
         required
       />
     </label>
@@ -97,13 +99,36 @@
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yy = d.getFullYear();
-    return `${dd}/${mm}/${yy}`;
+    return `${dd}-${mm}-${yy}`;
   }
 
   function calcAmounts(totalCents, n) {
     const base = Math.floor(totalCents / n);
     const rem  = totalCents % n;
     return Array.from({ length: n }, (_, i) => ((base + (i < rem ? 1 : 0)) / 100).toFixed(2));
+  }
+
+  function splitCents(totalCents, n) {
+    const base = Math.floor(totalCents / n);
+    const rem  = totalCents % n;
+    return Array.from({ length: n }, (_, i) => base + (i < rem ? 1 : 0));
+  }
+
+  function parseFrOrIsoDate(raw) {
+    const value = (raw || '').trim();
+    if (!value) return null;
+
+    const fr = value.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+    if (fr) {
+      return new Date(Number(fr[3]), Number(fr[2]) - 1, Number(fr[1]));
+    }
+
+    const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (iso) {
+      return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+    }
+
+    return null;
   }
 
   function renderRows() {
@@ -120,14 +145,7 @@
     rowsDiv.style.display = '';
     const totalCents = Math.round(total * 100);
     const amounts = calcAmounts(totalCents, n);
-    // Parse dd/mm/yyyy or yyyy-mm-dd
-    let baseDate;
-    if (rawDate) {
-      const parts = rawDate.includes('/') ? rawDate.split('/') : rawDate.split('-').reverse();
-      baseDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-    } else {
-      baseDate = new Date();
-    }
+    const baseDate = parseFrOrIsoDate(rawDate) || new Date();
 
     tbody.innerHTML = '';
     for (let i = 1; i <= n; i++) {
@@ -137,7 +155,7 @@
         <tr>
           <td>${i}</td>
           <td><input type="number" name="inst_${i}_amount" value="${amt}" min="0" step="0.01" style="width:7rem;" /></td>
-          <td><input type="text" name="inst_${i}_date" value="${toFrDate(due)}" placeholder="jj/mm/aaaa" style="width:8rem;" /></td>
+          <td><input type="text" class="fr-date-input" name="inst_${i}_date" value="${toFrDate(due)}" placeholder="JJ-MM-AAAA" pattern="^\\d{2}[-/]\\d{2}[-/]\\d{4}$" style="width:8rem;" /></td>
           <td>
             <select name="inst_${i}_method">
               <option value="">— Prévision —</option>
@@ -151,9 +169,66 @@
     }
   }
 
+  function rebalanceFromAmountChange(changedInput) {
+    const amountInputs = Array.from(tbody.querySelectorAll('input[name^="inst_"][name$="_amount"]'));
+    if (amountInputs.length <= 1) {
+      return;
+    }
+
+    const changedIndex = amountInputs.indexOf(changedInput);
+    if (changedIndex < 0) {
+      return;
+    }
+
+    const totalCents = Math.max(0, Math.round((parseFloat(totalInput.value) || 0) * 100));
+    const rawChanged = Math.round((parseFloat(changedInput.value) || 0) * 100);
+    const clampedChanged = Math.min(Math.max(rawChanged, 0), totalCents);
+    changedInput.value = (clampedChanged / 100).toFixed(2);
+
+    const otherInputs = amountInputs.filter((_, idx) => idx !== changedIndex);
+    const remainingCents = Math.max(totalCents - clampedChanged, 0);
+    const distribution = splitCents(remainingCents, otherInputs.length);
+
+    otherInputs.forEach((input, idx) => {
+      input.value = (distribution[idx] / 100).toFixed(2);
+    });
+  }
+
+  function cascadeDatesFromChange(changedInput) {
+    const dateInputs = Array.from(tbody.querySelectorAll('input[name^="inst_"][name$="_date"]'));
+    const changedIndex = dateInputs.indexOf(changedInput);
+    if (changedIndex < 0 || changedIndex === dateInputs.length - 1) {
+      return;
+    }
+
+    const baseDate = parseFrOrIsoDate(changedInput.value);
+    if (!baseDate || Number.isNaN(baseDate.getTime())) {
+      return;
+    }
+
+    for (let idx = changedIndex + 1; idx < dateInputs.length; idx += 1) {
+      const nextDate = nextDueDate(baseDate, idx - changedIndex);
+      dateInputs[idx].value = toFrDate(nextDate);
+    }
+  }
+
   countSel.addEventListener('change', renderRows);
   totalInput.addEventListener('input', renderRows);
   dateInput.addEventListener('change', renderRows);
+
+  tbody.addEventListener('input', (event) => {
+    const target = event.target;
+    if (target && target.matches('input[name^="inst_"][name$="_amount"]')) {
+      rebalanceFromAmountChange(target);
+    }
+  });
+
+  tbody.addEventListener('change', (event) => {
+    const target = event.target;
+    if (target && target.matches('input[name^="inst_"][name$="_date"]')) {
+      cascadeDatesFromChange(target);
+    }
+  });
 
   // Initial render
   renderRows();

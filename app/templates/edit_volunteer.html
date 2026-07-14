@@ -1,0 +1,79 @@
+{% extends "base.html" %} {% block title %}Modifier le bénévole | EduManager{%
+endblock %} {% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.volunteers_page') }}"
+      >Retour</a
+    >
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Prénom *
+      <input
+        type="text"
+        name="first_name"
+        value="{{ volunteer.user.first_name }}"
+        required
+      />
+    </label>
+    <label>
+      Nom *
+      <input
+        type="text"
+        name="last_name"
+        value="{{ volunteer.user.last_name }}"
+        required
+      />
+    </label>
+    <label>
+      Email *
+      <input
+        type="email"
+        name="email"
+        value="{{ volunteer.user.email }}"
+        required
+      />
+    </label>
+    <label>
+      Compétences
+      <input
+        type="text"
+        name="skills"
+        value="{{ volunteer.skills or '' }}"
+        placeholder="Soutien scolaire, accompagnement..."
+      />
+    </label>
+    <label>
+      Disponibilité
+      <textarea name="availability" rows="3" placeholder="Lundi, mardi et jeudi de 17h à 19h">{{ volunteer.availability or '' }}</textarea>
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Supprimer ce bénévole</h2>
+  {% if volunteer.courses %}
+  <p style="color: var(--ink-soft)">
+    Ce bénévole est affecté à {{ volunteer.courses|length }} cours. Retirez-le
+    des cours avant de le supprimer.
+  </p>
+  {% else %}
+  <form
+    method="post"
+    action="{{ url_for('main.delete_volunteer', volunteer_id=volunteer.id) }}"
+    onsubmit="return confirm('Supprimer définitivement ce bénévole ?');"
+  >
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">
+        Supprimer le bénévole
+      </button>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

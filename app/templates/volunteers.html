@@ -1,0 +1,66 @@
+{% extends "base.html" %} {% block title %}Bénévoles | EduManager{% endblock %} {% block content %}
+<section class="panel section-block">
+  <div class="section-head">
+    <h1>Bénévoles</h1>
+    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+      >Retour au tableau de bord</a
+    >
+  </div>
+  <div class="section-actions-row">
+    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
+  </div>
+
+  <form method="post" class="form-grid">
+    <label>
+      Prénom *
+      <input type="text" name="first_name" autocomplete="given-name" required />
+    </label>
+    <label>
+      Nom *
+      <input type="text" name="last_name" autocomplete="family-name" required />
+    </label>
+    <label>
+      Email *
+      <input type="email" name="email" autocomplete="email" required />
+    </label>
+    <label>
+      Mot de passe *
+      <input type="password" name="password" autocomplete="new-password" required />
+    </label>
+    <label>
+      Compétences
+      <input type="text" name="skills" placeholder="Soutien scolaire, accompagnement..." autocomplete="off" />
+    </label>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">
+        Ajouter un bénévole
+      </button>
+    </div>
+  </form>
+</section>
+
+<section class="panel section-block">
+  <h2>Liste des bénévoles</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nom</th><th>Email</th><th>Compétences</th><th>Cours assignés</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for volunteer in volunteers %}
+        <tr>
+          <td>{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</td>
+          <td>{{ volunteer.user.email }}</td>
+          <td>{{ volunteer.skills or '-' }}</td>
+          <td>{{ volunteer.courses | length }}</td>
+          <td><a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_volunteer', volunteer_id=volunteer.id) }}">Modifier</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Aucun bénévole pour le moment.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% set pagination = volunteers_pagination %}{% set endpoint_name = 'main.volunteers_page' %}{% include '_pagination.html' %}
+</section>
+{% endblock %}

@@ -26,7 +26,7 @@
         {% for course in courses %}<option value="{{ course.id }}">{{ course.title }}</option>{% endfor %}
       </select>
     </label>
-    <label>Date<input type="date" name="assessment_date" /></label>
+    <label>Date<input type="text" name="assessment_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" /></label>
     <label>Categorie<input type="text" name="category" value="Controle continu" /></label>
     <label>Score<input type="number" step="0.01" name="score" /></label>
     <label>Note max<input type="number" step="0.01" name="max_score" value="20" /></label>
@@ -44,7 +44,7 @@
         <tr>
           <td>{{ assessment.student.full_name }}</td>
           <td>{{ assessment.course.title if assessment.course else '—' }}</td>
-          <td>{{ assessment.assessment_date.strftime('%d/%m/%Y') }}</td>
+          <td>{{ assessment.assessment_date.strftime('%d-%m-%Y') }}</td>
           <td>{{ assessment.category }}</td>
           <td>{% if assessment.score is not none %}{{ assessment.score }}/{{ assessment.max_score }} ({{ assessment.percentage }}%){% else %}Observation{% endif %}</td>
           <td>

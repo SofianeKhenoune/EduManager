@@ -23,6 +23,15 @@ endblock %} {% block content %}
       </select>
     </label>
     <label>
+      Bénévole (optionnel)
+      <select name="volunteer_id">
+        <option value="">Aucun</option>
+        {% for volunteer in volunteers %}
+        <option value="{{ volunteer.id }}" {% if course.volunteer_id == volunteer.id %}selected{% endif %}>{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
       Site
       <select name="site_id">
         <option value="">Aucun</option>
@@ -51,10 +60,10 @@ endblock %} {% block content %}
     </label>
     <label>
       Créneau
-      <select name="time_slot">
+      <select name="time_slot" class="time-slot-select">
         <option value="">Aucun</option>
-        <option {% if course.time_slot == 'matin' %}selected{% endif %}>matin</option>
-        <option {% if course.time_slot == 'après-midi' %}selected{% endif %}>après-midi</option>
+        <option value="matin" {% if course.time_slot == 'matin' %}selected{% endif %}>matin (9:00-12:15)</option>
+        <option value="après-midi" {% if course.time_slot == 'après-midi' %}selected{% endif %}>après-midi (13:45-17:00)</option>
       </select>
     </label>
     <label>
@@ -63,23 +72,15 @@ endblock %} {% block content %}
     </label>
     <label>
       Heure de début
-      <input
-        type="number"
-        min="0"
-        max="23"
-        name="start_hour"
-        value="{{ course.start_hour if course.start_hour is not none else '' }}"
-      />
+      <input type="time" name="start_time" class="start-time-input" />
+      <input type="hidden" name="start_hour" class="start-hour-input" value="{{ course.start_hour or '' }}" />
+      <input type="hidden" name="start_minute" class="start-minute-input" />
     </label>
     <label>
       Heure de fin
-      <input
-        type="number"
-        min="0"
-        max="23"
-        name="end_hour"
-        value="{{ course.end_hour if course.end_hour is not none else '' }}"
-      />
+      <input type="time" name="end_time" class="end-time-input" />
+      <input type="hidden" name="end_hour" class="end-hour-input" value="{{ course.end_hour or '' }}" />
+      <input type="hidden" name="end_minute" class="end-minute-input" />
     </label>
     <label>
       Salle

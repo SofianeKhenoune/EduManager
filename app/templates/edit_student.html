@@ -6,11 +6,11 @@
   </div>
 
   <form method="post" class="form-grid">
-    <label>Prénom *<input type="text" name="first_name" value="{{ student.first_name }}" required /></label>
-    <label>Nom *<input type="text" name="last_name" value="{{ student.last_name }}" required /></label>
+    <label>Prénom *<input type="text" name="first_name" value="{{ student.first_name }}" autocomplete="given-name" required /></label>
+    <label>Nom *<input type="text" name="last_name" value="{{ student.last_name }}" autocomplete="family-name" required /></label>
     <label>
       Date de naissance *
-      <input type="text" name="birth_date" class="fr-date-input" value="{{ student.birth_date.strftime('%d-%m-%Y') if student.birth_date else '' }}" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
+      <input type="text" name="birth_date" class="fr-date-input" value="{{ student.birth_date.strftime('%d-%m-%Y') if student.birth_date else '' }}" placeholder="JJ-MM-AAAA" autocomplete="bday" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
       <small class="text-muted">Format attendu: JJ-MM-AAAA</small>
     </label>
     <label>

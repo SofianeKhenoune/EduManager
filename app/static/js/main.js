@@ -98,7 +98,110 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   };
 
+  const formatBirthDateInput = (rawValue) => {
+    const digits = (rawValue || '').replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) {
+      return digits;
+    }
+    if (digits.length <= 4) {
+      return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    }
+    return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
+  };
+
+  const initBirthDateMask = () => {
+    document
+      .querySelectorAll('input.fr-date-input, input[name="birth_date"]')
+      .forEach((field) => {
+        if (field.dataset.birthDateMaskReady === '1') {
+          return;
+        }
+
+        const applyMask = () => {
+          const formatted = formatBirthDateInput(field.value);
+          if (field.value !== formatted) {
+            field.value = formatted;
+          }
+        };
+
+        field.addEventListener('input', applyMask);
+        field.addEventListener('paste', () => {
+          window.setTimeout(applyMask, 0);
+        });
+        field.addEventListener('blur', applyMask);
+        field.dataset.birthDateMaskReady = '1';
+        applyMask();
+      });
+  };
+
   initAutoToggleForms();
+  initBirthDateMask();
+
+  // Initialize time slot handlers for courses
+  const TIME_SLOTS = {
+    matin: { start: 9, end: 12, start_min: 0, end_min: 15 },
+    'après-midi': { start: 13, end: 17, start_min: 45, end_min: 0 },
+  };
+
+  const initTimeSlots = () => {
+    const timeSlotSelects = document.querySelectorAll('.time-slot-select');
+    timeSlotSelects.forEach((select) => {
+      const form = select.closest('form');
+      if (!form) return;
+
+      const startTimeInput = form.querySelector('.start-time-input');
+      const endTimeInput = form.querySelector('.end-time-input');
+      const startHourInput = form.querySelector('.start-hour-input');
+      const endHourInput = form.querySelector('.end-hour-input');
+
+      if (!startTimeInput || !endTimeInput) return;
+
+      const updateTimes = () => {
+        const slot = TIME_SLOTS[select.value];
+        if (slot) {
+          const startTime = `${String(slot.start).padStart(2, '0')}:${String(slot.start_min).padStart(2, '0')}`;
+          const endTime = `${String(slot.end).padStart(2, '0')}:${String(slot.end_min).padStart(2, '0')}`;
+          startTimeInput.value = startTime;
+          endTimeInput.value = endTime;
+          if (startHourInput) startHourInput.value = slot.start;
+          if (endHourInput) endHourInput.value = slot.end;
+        }
+      };
+
+      // Initialize from existing values on page load
+      const initFromExisting = () => {
+        if (startHourInput && startHourInput.value) {
+          const sh = parseInt(startHourInput.value);
+          if (sh >= 0 && sh <= 23) {
+            startTimeInput.value = `${String(sh).padStart(2, '0')}:00`;
+          }
+        }
+        if (endHourInput && endHourInput.value) {
+          const eh = parseInt(endHourInput.value);
+          if (eh >= 0 && eh <= 23) {
+            endTimeInput.value = `${String(eh).padStart(2, '0')}:00`;
+          }
+        }
+      };
+
+      initFromExisting();
+
+      select.addEventListener('change', updateTimes);
+
+      // Handle time input changes - sync to hidden fields
+      const syncToHidden = (timeInput, hourInput) => {
+        timeInput.addEventListener('change', () => {
+          const [h] = timeInput.value.split(':');
+          if (hourInput && h) hourInput.value = parseInt(h);
+        });
+      };
+
+      syncToHidden(startTimeInput, startHourInput);
+      syncToHidden(endTimeInput, endHourInput);
+    });
+  };
+
+  initTimeSlots();
 
   const studentAddForm = document.getElementById('student-add-form');
   if (studentAddForm) {
@@ -211,6 +314,43 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   initZipCityAutofill();
+
+  const initAutocompleteHints = () => {
+    const autocompleteByName = {
+      first_name: 'given-name',
+      last_name: 'family-name',
+      email: 'email',
+      password: 'new-password',
+      birth_date: 'bday',
+      phone_number: 'tel',
+      father_phone: 'tel',
+      mother_phone: 'tel',
+      street: 'street-address',
+      address: 'street-address',
+      city: 'address-level2',
+      zip_code: 'postal-code',
+      school_year: 'off',
+      title: 'organization-title',
+      description: 'off',
+      room: 'off',
+    };
+
+    document
+      .querySelectorAll('input[name], textarea[name], select[name]')
+      .forEach((field) => {
+        const fieldName = field.getAttribute('name');
+        if (!fieldName || field.hasAttribute('autocomplete')) {
+          return;
+        }
+
+        const autocomplete = autocompleteByName[fieldName];
+        if (autocomplete) {
+          field.setAttribute('autocomplete', autocomplete);
+        }
+      });
+  };
+
+  initAutocompleteHints();
 
   // Hamburger nav toggle
   const burger = document.getElementById('nav-burger');

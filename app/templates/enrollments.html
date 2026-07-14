@@ -84,7 +84,7 @@
         <tr>
           <td>{{ e.student.last_name }} {{ e.student.first_name }}</td>
           <td>{{ e.course.title }}</td>
-          <td>{{ e.enrollment_date.strftime('%d/%m/%Y') if e.enrollment_date else '—' }}</td>
+          <td>{{ e.enrollment_date.strftime('%d-%m-%Y') if e.enrollment_date else '—' }}</td>
           <td>
             <form method="post" action="{{ url_for('main.edit_enrollment', enrollment_id=e.id) }}" class="inline-form">
               <select name="status" onchange="this.form.submit()" class="status-select status-{{ e.status }}">

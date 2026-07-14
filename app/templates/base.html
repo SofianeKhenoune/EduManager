@@ -18,7 +18,7 @@
           <span>EduManager</span>
         </a>
         <nav class="nav-links" id="main-nav" aria-label="Navigation principale">
-          <a href="{{ url_for('main.index') }}">Tableau de bord</a>
+          {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.index') }}">Tableau de bord</a>{% endif %}
           {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager', 'teacher', 'parent') %}
           <div class="nav-dropdown">
             <button class="nav-drop-btn" type="button" aria-haspopup="true" aria-expanded="false">
@@ -44,6 +44,7 @@
             </button>
             <div class="nav-drop-menu" role="menu">
               <a href="{{ url_for('main.teachers_page') }}" role="menuitem">Enseignants</a>
+              <a href="{{ url_for('main.volunteers_page') }}" role="menuitem">Bénévoles</a>
               <a href="{{ url_for('main.employees_page') }}" role="menuitem">Employés</a>
               <a href="{{ url_for('main.sites_page') }}" role="menuitem">Sites</a>
               <a href="{{ url_for('main.departments_page') }}" role="menuitem">Departements</a>

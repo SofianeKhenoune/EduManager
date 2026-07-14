@@ -14,19 +14,19 @@
   <form method="post" class="form-grid" id="student-add-form" data-form-toggle="off">
 
     <div class="form-group-title">Enfant</div>
-    <label>Prénom *<input type="text" name="first_name" required /></label>
-    <label>Nom *<input type="text" name="last_name" required /></label>
+    <label>Prénom *<input type="text" name="first_name" value="{{ request.form.get('first_name', '') }}" autocomplete="given-name" required /></label>
+    <label>Nom *<input type="text" name="last_name" value="{{ request.form.get('last_name', '') }}" autocomplete="family-name" required /></label>
     <label class="full-width">
       Date de naissance *
-      <input type="text" name="birth_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
+      <input type="text" name="birth_date" class="fr-date-input" placeholder="JJ-MM-AAAA" value="{{ request.form.get('birth_date', '') }}" autocomplete="bday" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
       <small class="text-muted">Format attendu: JJ-MM-AAAA</small>
     </label>
     <label>
       Genre
       <select name="gender" required>
         <option value="">— Non précisé —</option>
-        <option value="M">Garçon</option>
-        <option value="F">Fille</option>
+        <option value="M" {{ 'selected' if request.form.get('gender', '') == 'M' else '' }}>Garçon</option>
+        <option value="F" {{ 'selected' if request.form.get('gender', '') == 'F' else '' }}>Fille</option>
       </select>
     </label>
     <label>
@@ -34,7 +34,7 @@
       <select name="site_id" required>
         <option value="">Aucun</option>
         {% for site in sites %}
-        <option value="{{ site.id }}">{{ site.name }}</option>
+        <option value="{{ site.id }}" {{ 'selected' if request.form.get('site_id', '')|int == site.id else '' }}>{{ site.name }}</option>
         {% endfor %}
       </select>
     </label>
@@ -42,21 +42,21 @@
       Tarif *
       <select name="tarif_type" required>
         <option value="">— Sélectionner —</option>
-        <option value="normal">Normal</option>
-        <option value="special">Spécial</option>
+        <option value="normal" {{ 'selected' if request.form.get('tarif_type', '') == 'normal' else '' }}>Normal</option>
+        <option value="special" {{ 'selected' if request.form.get('tarif_type', '') == 'special' else '' }}>Spécial</option>
       </select>
     </label>
     <label>
       Année scolaire *
-      <input type="text" name="school_year" value="{{ default_school_year }}" readonly required />
+      <input type="text" name="school_year" value="{{ request.form.get('school_year', default_school_year) }}" autocomplete="off" readonly required />
     </label>
     <div class="checkbox-group">
       <label class="label-checkbox">
-        <input type="checkbox" name="is_reinscription" value="1" />
+        <input type="checkbox" name="is_reinscription" value="1" {{ 'checked' if request.form.get('is_reinscription') == '1' else '' }} />
         Réinscription
       </label>
       <label class="label-checkbox">
-        <input type="checkbox" name="lives_alone" value="1" />
+        <input type="checkbox" name="lives_alone" value="1" {{ 'checked' if request.form.get('lives_alone') == '1' else '' }} />
         Rentre seul(e)
       </label>
     </div>
@@ -74,7 +74,7 @@
       <select name="family_id" id="family-select">
         <option value="">— Nouvelle famille —</option>
         {% for f in families %}
-        <option value="{{ f.id }}">
+        <option value="{{ f.id }}" {{ 'selected' if request.form.get('family_id', '')|int == f.id else '' }}>
           {{ f.display_name }}
           {% if f.father_first_name %} · Pere: {{ f.father_first_name }}{% endif %}
           {% if f.mother_first_name %} · Mere: {{ f.mother_first_name }}{% endif %}
@@ -85,22 +85,22 @@
       </select>
     </label>
     <div class="form-group-title form-group-title-sub" id="new-family-fields-title" data-new-family-field>Père / Tuteur légal</div>
-    <label data-new-family-field>Prénom père *<input type="text" name="father_first_name" required /></label>
-    <label data-new-family-field>Nom père *<input type="text" name="father_last_name" required /></label>
-    <label data-new-family-field>Tél. père<input type="tel" name="father_phone" /></label>
-    <label data-new-family-field>Email père<input type="email" name="father_email" /></label>
+    <label data-new-family-field>Prénom père *<input type="text" name="father_first_name" value="{{ request.form.get('father_first_name', '') }}" autocomplete="given-name" required /></label>
+    <label data-new-family-field>Nom père *<input type="text" name="father_last_name" value="{{ request.form.get('father_last_name', '') }}" autocomplete="family-name" required /></label>
+    <label data-new-family-field>Tél. père<input type="tel" name="father_phone" value="{{ request.form.get('father_phone', '') }}" autocomplete="tel" /></label>
+    <label data-new-family-field>Email père<input type="email" name="father_email" value="{{ request.form.get('father_email', '') }}" autocomplete="email" /></label>
 
     <div class="form-group-title form-group-title-sub" data-new-family-field>Mère / Tutrice légale</div>
-    <label data-new-family-field>Prénom mère *<input type="text" name="mother_first_name" required /></label>
-    <label data-new-family-field>Nom mère *<input type="text" name="mother_last_name" required /></label>
-    <label data-new-family-field>Tél. mère<input type="tel" name="mother_phone" /></label>
-    <label data-new-family-field>Email mère<input type="email" name="mother_email" /></label>
+    <label data-new-family-field>Prénom mère *<input type="text" name="mother_first_name" value="{{ request.form.get('mother_first_name', '') }}" autocomplete="given-name" required /></label>
+    <label data-new-family-field>Nom mère *<input type="text" name="mother_last_name" value="{{ request.form.get('mother_last_name', '') }}" autocomplete="family-name" required /></label>
+    <label data-new-family-field>Tél. mère<input type="tel" name="mother_phone" value="{{ request.form.get('mother_phone', '') }}" autocomplete="tel" /></label>
+    <label data-new-family-field>Email mère<input type="email" name="mother_email" value="{{ request.form.get('mother_email', '') }}" autocomplete="email" /></label>
 
     <div class="form-group-title form-group-title-sub" data-new-family-field>Adresse</div>
-    <label data-new-family-field>N° de voie *<input type="number" name="address_number" min="0" required /></label>
-    <label data-new-family-field>Rue *<input type="text" name="street" required /></label>
-    <label data-new-family-field>Code postal *<input type="text" name="zip_code" inputmode="numeric" pattern="^\d{5}$" required /></label>
-    <label data-new-family-field>Ville *<input type="text" name="city" list="city-suggestions" autocomplete="off" required /></label>
+    <label data-new-family-field>N° de voie *<input type="number" name="address_number" min="0" value="{{ request.form.get('address_number', '') }}" autocomplete="off" required /></label>
+    <label data-new-family-field>Rue *<input type="text" name="street" value="{{ request.form.get('street', '') }}" autocomplete="street-address" required /></label>
+    <label data-new-family-field>Code postal *<input type="text" name="zip_code" inputmode="numeric" pattern="^\d{5}$" value="{{ request.form.get('zip_code', '') }}" autocomplete="postal-code" required /></label>
+    <label data-new-family-field>Ville *<input type="text" name="city" list="city-suggestions" autocomplete="address-level2" value="{{ request.form.get('city', '') }}" required /></label>
     <datalist id="city-suggestions"></datalist>
     <p class="text-muted full-span" data-new-family-field>Au moins un e-mail parent et un numéro de téléphone parent sont obligatoires.</p>
 

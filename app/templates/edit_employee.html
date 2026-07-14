@@ -48,9 +48,12 @@ endblock %} {% block content %}
     <label>
       Date de naissance
       <input
-        type="date"
+        type="text"
+        class="fr-date-input"
         name="birth_date"
-        value="{{ employee.birth_date.isoformat() if employee.birth_date else '' }}"
+        value="{{ employee.birth_date.strftime('%d-%m-%Y') if employee.birth_date else '' }}"
+        placeholder="JJ-MM-AAAA"
+        pattern="^\d{2}[-/]\d{2}[-/]\d{4}$"
       />
     </label>
     <label>
@@ -116,9 +119,12 @@ endblock %} {% block content %}
     <label>
       Date d'embauche *
       <input
-        type="date"
+        type="text"
+        class="fr-date-input"
         name="hire_date"
-        value="{{ employee.hire_date.isoformat() if employee.hire_date else '' }}"
+        value="{{ employee.hire_date.strftime('%d-%m-%Y') if employee.hire_date else '' }}"
+        placeholder="JJ-MM-AAAA"
+        pattern="^\d{2}[-/]\d{2}[-/]\d{4}$"
         required
       />
     </label>
@@ -134,17 +140,23 @@ endblock %} {% block content %}
     <label>
       Fin de période d'essai
       <input
-        type="date"
+        type="text"
+        class="fr-date-input"
         name="trial_period_end"
-        value="{{ employee.trial_period_end.isoformat() if employee.trial_period_end else '' }}"
+        value="{{ employee.trial_period_end.strftime('%d-%m-%Y') if employee.trial_period_end else '' }}"
+        placeholder="JJ-MM-AAAA"
+        pattern="^\d{2}[-/]\d{2}[-/]\d{4}$"
       />
     </label>
     <label>
       Fin de contrat
       <input
-        type="date"
+        type="text"
+        class="fr-date-input"
         name="contract_end_date"
-        value="{{ employee.contract_end_date.isoformat() if employee.contract_end_date else '' }}"
+        value="{{ employee.contract_end_date.strftime('%d-%m-%Y') if employee.contract_end_date else '' }}"
+        placeholder="JJ-MM-AAAA"
+        pattern="^\d{2}[-/]\d{2}[-/]\d{4}$"
       />
     </label>
     <label>

@@ -33,7 +33,7 @@
     </label>
     <label>
       Date
-      <input type="date" name="payment_date" />
+      <input type="text" name="payment_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" />
     </label>
     <label>
       Moyen de paiement
@@ -93,7 +93,7 @@
         <tr>
           <td>{% if p.family %}<a href="{{ url_for('main.family_detail', family_id=p.family.id) }}">{{ p.family.display_name }}</a>{% else %}—{% endif %}</td>
           <td>{{ "%.2f"|format(p.total_amount) }} €</td>
-          <td>{{ p.payment_date.strftime('%d/%m/%Y') if p.payment_date else '—' }}</td>
+          <td>{{ p.payment_date.strftime('%d-%m-%Y') if p.payment_date else '—' }}</td>
           <td>
             {% if p.method == 'CB' %}Carte bancaire
             {% elif p.method == 'ESP' %}Espèces

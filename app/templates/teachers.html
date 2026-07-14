@@ -8,35 +8,89 @@
   </div>
   <div class="section-actions-row">
     <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
+    <form method="post" action="{{ url_for('main.delete_all_teachers') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les enseignants sans cours affectés ? Cette action est irréversible.')">
+      <button class="btn btn-danger" type="submit">Supprimer tous les enseignants</button>
+    </form>
   </div>
 
-  <form method="post" class="form-grid">
-    <label>
-      Prénom *
-      <input type="text" name="first_name" required />
+  <form method="post" class="form-grid" id="teacher-add-form">
+    <label style="grid-column: 1 / -1">
+      Type de profil *
+      <select name="teacher_origin" id="teacher-origin-select">
+        <option value="">-- Salarié ou bénévole ? --</option>
+        <option value="employee">Salarié</option>
+        <option value="volunteer">Bénévole</option>
+      </select>
     </label>
-    <label>
-      Nom *
-      <input type="text" name="last_name" required />
-    </label>
-    <label>
-      Email *
-      <input type="email" name="email" required />
-    </label>
-    <label>
-      Mot de passe *
-      <input type="password" name="password" required />
-    </label>
-    <label>
+
+    <div id="teacher-employee-label" style="display:none">
+      {% if available_employees %}
+      <label>
+        Sélectionner le salarié *
+        <select name="employee_id" id="teacher-employee-select">
+          <option value="">-- Choisir un salarié --</option>
+          {% for employee in available_employees %}
+          <option value="{{ employee.id }}">{{ employee.user.first_name }} {{ employee.user.last_name }} ({{ employee.user.email }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% else %}
+      <p style="color: var(--ink-soft); margin: 0">
+        Aucun salarié disponible — tous sont déjà enseignants, ou il n'y a pas encore de salarié.
+        <a href="{{ url_for('main.employees_page') }}">Ajouter un salarié</a>
+      </p>
+      {% endif %}
+    </div>
+
+    <div id="teacher-volunteer-label" style="display:none">
+      {% if available_volunteers %}
+      <label>
+        Sélectionner le bénévole *
+        <select name="volunteer_id" id="teacher-volunteer-select">
+          <option value="">-- Choisir un bénévole --</option>
+          {% for volunteer in available_volunteers %}
+          <option value="{{ volunteer.id }}">{{ volunteer.user.first_name }} {{ volunteer.user.last_name }} ({{ volunteer.user.email }})</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% else %}
+      <p style="color: var(--ink-soft); margin: 0">
+        Aucun bénévole disponible — tous sont déjà enseignants, ou il n'y a pas encore de bénévole.
+        <a href="{{ url_for('main.volunteers_page') }}">Ajouter un bénévole</a>
+      </p>
+      {% endif %}
+    </div>
+
+    <label id="teacher-subject-label" style="display:none">
       Matière
-      <input type="text" name="subject" placeholder="Mathématiques" />
+      <input type="text" name="subject" placeholder="Mathématiques" autocomplete="off" />
     </label>
-    <div class="form-actions">
-      <button class="btn btn-primary" type="submit">
-        Ajouter un enseignant
-      </button>
+
+    <div class="form-actions" id="teacher-submit-wrap" style="display:none">
+      <button class="btn btn-primary" type="submit">Ajouter un enseignant</button>
     </div>
   </form>
+
+  <script>
+    (function () {
+      var originSel = document.getElementById('teacher-origin-select');
+      var empLabel  = document.getElementById('teacher-employee-label');
+      var volLabel  = document.getElementById('teacher-volunteer-label');
+      var subLabel  = document.getElementById('teacher-subject-label');
+      var submitWrap = document.getElementById('teacher-submit-wrap');
+
+      function update() {
+        var v = originSel.value;
+        empLabel.style.display  = (v === 'employee') ? '' : 'none';
+        volLabel.style.display  = (v === 'volunteer') ? '' : 'none';
+        subLabel.style.display  = (v !== '') ? '' : 'none';
+        submitWrap.style.display = (v !== '') ? '' : 'none';
+      }
+
+      originSel.addEventListener('change', update);
+      update();
+    })();
+  </script>
 </section>
 
 <section class="panel section-block">

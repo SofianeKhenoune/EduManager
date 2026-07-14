@@ -43,6 +43,7 @@ class User(UserMixin, db.Model):
 
     role = db.relationship("Role", back_populates="users")
     teacher = db.relationship("Teacher", back_populates="user", uselist=False)
+    volunteer = db.relationship("Volunteer", back_populates="user", uselist=False)
     family = db.relationship("Family", back_populates="user", uselist=False)
     employee = db.relationship("Employee", back_populates="user", uselist=False)
 
@@ -67,6 +68,22 @@ class Teacher(db.Model):
 
     user = db.relationship("User", back_populates="teacher")
     courses = db.relationship("Course", back_populates="teacher", lazy=True)
+
+    @property
+    def full_name(self):
+        return self.user.full_name if self.user else ""
+
+
+class Volunteer(db.Model):
+    __tablename__ = "volunteers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    skills = db.Column(db.Text)
+    availability = db.Column(db.Text)
+
+    user = db.relationship("User", back_populates="volunteer")
+    courses = db.relationship("Course", back_populates="volunteer", lazy=True)
 
     @property
     def full_name(self):
@@ -153,16 +170,20 @@ class Course(db.Model):
     title = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
     teacher_id = db.Column(db.Integer, db.ForeignKey("teachers.id"), nullable=False)
+    volunteer_id = db.Column(db.Integer, db.ForeignKey("volunteers.id"), nullable=True)
     site_id = db.Column(db.Integer, db.ForeignKey("sites.id"))
     level = db.Column(db.Text)
     day = db.Column(db.Text)
     time_slot = db.Column(db.Text)
     start_hour = db.Column(db.Integer)
+    start_minute = db.Column(db.Integer, server_default=text("0"))
     end_hour = db.Column(db.Integer)
+    end_minute = db.Column(db.Integer, server_default=text("0"))
     room = db.Column(db.Text)
     capacity = db.Column(db.Integer, nullable=False, server_default=text("20"))
 
     teacher = db.relationship("Teacher", back_populates="courses")
+    volunteer = db.relationship("Volunteer", back_populates="courses")
     site = db.relationship("Site", back_populates="courses")
     enrollments = db.relationship("Enrollment", back_populates="course", lazy=True)
     sessions = db.relationship("CourseSession", back_populates="course", lazy=True, cascade="all, delete-orphan")

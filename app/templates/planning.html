@@ -26,7 +26,7 @@
         {% for course in courses %}<option value="{{ course.id }}">{{ course.title }} - {{ course.schedule_label }}</option>{% endfor %}
       </select>
     </label>
-    <label>Date de séance<input type="date" name="session_date" required /></label>
+    <label>Date de séance<input type="text" name="session_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required /></label>
     <label>Statut
       <select name="status">
         <option value="planned">Planifiee</option>
@@ -70,7 +70,7 @@
         <tbody>
           {% for session in sessions %}
           <tr>
-            <td>{{ session.session_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ session.session_date.strftime('%d-%m-%Y') }}</td>
             <td>{{ session.course.title }}</td>
             <td>{{ session.topic or '—' }}</td>
             <td>{{ session.status }}</td>

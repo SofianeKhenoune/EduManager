@@ -16,7 +16,7 @@
   <dl class="detail-grid">
     <div><dt>Poste</dt><dd>{{ employee.position.title if employee.position else '—' }}</dd></div>
     <div><dt>Contrat</dt><dd>{{ employee.contract_type or '—' }}</dd></div>
-    <div><dt>Embauche</dt><dd>{{ employee.hire_date.strftime('%d/%m/%Y') if employee.hire_date else '—' }}</dd></div>
+    <div><dt>Embauche</dt><dd>{{ employee.hire_date.strftime('%d-%m-%Y') if employee.hire_date else '—' }}</dd></div>
     <div><dt>Salaire mensuel</dt><dd>{{ '%.2f'|format(employee.monthly_salary) if employee.monthly_salary else '—' }} EUR</dd></div>
     <div><dt>Heures / semaine</dt><dd>{{ employee.hours_per_week or '—' }}</dd></div>
     <div><dt>Taux PAS</dt><dd>{{ employee.pas_rate or '—' }}</dd></div>
@@ -31,14 +31,14 @@
       <label>Type de contrat<input type="text" name="contract_type" value="{{ employee.contract_type or '' }}" /></label>
       <label>Taux horaire<input type="number" step="0.01" name="hourly_rate" /></label>
       <label>Salaire annuel<input type="number" step="0.01" name="annual_salary" /></label>
-      <label>Date d'effet<input type="date" name="effective_date" /></label>
+      <label>Date d'effet<input type="text" name="effective_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" /></label>
       <label>Avantages<textarea name="benefits" rows="2"></textarea></label>
       <label>Notes<textarea name="notes" rows="2"></textarea></label>
       <div class="form-actions"><button class="btn btn-primary" type="submit">Ajouter</button></div>
     </form>
     <ul class="simple-list">
       {% for detail in employee.salary_details | sort(attribute='effective_date', reverse=True) %}
-      <li>{{ detail.effective_date.strftime('%d/%m/%Y') if detail.effective_date else '—' }} · {{ '%.2f'|format(detail.annual_salary) if detail.annual_salary else '—' }} EUR</li>
+      <li>{{ detail.effective_date.strftime('%d-%m-%Y') if detail.effective_date else '—' }} · {{ '%.2f'|format(detail.annual_salary) if detail.annual_salary else '—' }} EUR</li>
       {% else %}
       <li class="empty-row">Aucun historique salarial.</li>
       {% endfor %}
@@ -49,7 +49,7 @@
     <div class="section-head"><h2>Évaluations RH</h2></div>
     <form method="post" class="form-grid compact-form">
       <input type="hidden" name="action" value="review" />
-      <label>Date<input type="date" name="review_date" required /></label>
+      <label>Date<input type="text" name="review_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required /></label>
       <label>Note<input type="number" min="1" max="5" name="rating" required /></label>
       <label>Commentaires<textarea name="comments" rows="2"></textarea></label>
       <label>Objectifs<textarea name="goals" rows="2"></textarea></label>
@@ -57,7 +57,7 @@
     </form>
     <ul class="simple-list">
       {% for review in employee.performance_reviews | sort(attribute='review_date', reverse=True) %}
-      <li class="list-row-between"><span>{{ review.review_date.strftime('%d/%m/%Y') }}</span><strong>{{ review.rating }}/5</strong></li>
+      <li class="list-row-between"><span>{{ review.review_date.strftime('%d-%m-%Y') }}</span><strong>{{ review.rating }}/5</strong></li>
       {% else %}
       <li class="empty-row">Aucune évaluation.</li>
       {% endfor %}
@@ -68,8 +68,8 @@
     <div class="section-head"><h2>Congés</h2></div>
     <form method="post" class="form-grid compact-form">
       <input type="hidden" name="action" value="leave" />
-      <label>Debut<input type="date" name="start_date" required /></label>
-      <label>Fin<input type="date" name="end_date" required /></label>
+      <label>Debut<input type="text" name="start_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required /></label>
+      <label>Fin<input type="text" name="end_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required /></label>
       <label>Type<input type="text" name="leave_type" placeholder="Congé paye" /></label>
       <label>Statut
         <select name="status">
@@ -87,7 +87,7 @@
         <tbody>
           {% for leave in employee.leave_requests | sort(attribute='start_date', reverse=True) %}
           <tr>
-            <td>{{ leave.start_date.strftime('%d/%m/%Y') }} - {{ leave.end_date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ leave.start_date.strftime('%d-%m-%Y') }} - {{ leave.end_date.strftime('%d-%m-%Y') }}</td>
             <td>{{ leave.leave_type }}</td>
             <td>{{ leave.status }}</td>
             <td>

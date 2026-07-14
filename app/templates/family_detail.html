@@ -118,7 +118,7 @@
         <tr>
           <td>{{ s.last_name }}</td>
           <td>{{ s.first_name }}</td>
-          <td>{{ s.birth_date.strftime('%d/%m/%Y') if s.birth_date else '—' }}</td>
+          <td>{{ s.birth_date.strftime('%d-%m-%Y') if s.birth_date else '—' }}</td>
           <td>{% if s.gender == 'M' %}Garçon{% elif s.gender == 'F' %}Fille{% else %}—{% endif %}</td>
           <td>{% if s.is_reinscription %}<span class="badge-reinscription">Réinscription</span>{% else %}Nouveau{% endif %}</td>
           <td>{{ active_count }}</td>
@@ -160,11 +160,11 @@
   <details class="collapsible-block" style="margin-top:1rem;">
     <summary class="collapsible-summary">Ajouter un frère / une sœur</summary>
     <form method="post" action="{{ url_for('main.family_new_student', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
-      <label>Prénom *<input type="text" name="first_name" required /></label>
-      <label>Nom *<input type="text" name="last_name" required /></label>
+      <label>Prénom *<input type="text" name="first_name" autocomplete="given-name" required /></label>
+      <label>Nom *<input type="text" name="last_name" autocomplete="family-name" required /></label>
       <label>
         Date de naissance *
-        <input type="text" name="birth_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
+        <input type="text" name="birth_date" class="fr-date-input" placeholder="JJ-MM-AAAA" autocomplete="bday" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" required />
         <small class="text-muted">Format attendu: JJ-MM-AAAA</small>
       </label>
       <label>
@@ -242,10 +242,10 @@
     <summary class="collapsible-summary">Modifier le compte</summary>
     <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
       <input type="hidden" name="action" value="update" />
-      <label>Prénom *<input type="text" name="first_name" value="{{ family.user.first_name }}" required /></label>
-      <label>Nom *<input type="text" name="last_name" value="{{ family.user.last_name }}" required /></label>
-      <label>Email *<input type="email" name="email" value="{{ family.user.email }}" required /></label>
-      <label>Nouveau mot de passe<input type="password" name="password" /></label>
+      <label>Prénom *<input type="text" name="first_name" value="{{ family.user.first_name }}" autocomplete="given-name" required /></label>
+      <label>Nom *<input type="text" name="last_name" value="{{ family.user.last_name }}" autocomplete="family-name" required /></label>
+      <label>Email *<input type="email" name="email" value="{{ family.user.email }}" autocomplete="email" required /></label>
+      <label>Nouveau mot de passe<input type="password" name="password" autocomplete="new-password" /></label>
       <div class="form-actions" style="display:flex;gap:.5rem;flex-wrap:wrap;">
         <button class="btn btn-primary" type="submit">Mettre à jour</button>
       </div>
@@ -261,10 +261,10 @@
     <summary class="collapsible-summary">➕ Créer un compte parent</summary>
     <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
       <input type="hidden" name="action" value="create" />
-      <label>Prénom *<input type="text" name="first_name" value="{{ family.father_first_name or family.mother_first_name or '' }}" required /></label>
-      <label>Nom *<input type="text" name="last_name" value="{{ family.father_last_name or family.mother_last_name or '' }}" required /></label>
-      <label>Email *<input type="email" name="email" value="{{ family.father_email or family.mother_email or '' }}" required /></label>
-      <label>Mot de passe *<input type="password" name="password" required /></label>
+      <label>Prénom *<input type="text" name="first_name" value="{{ family.father_first_name or family.mother_first_name or '' }}" autocomplete="given-name" required /></label>
+      <label>Nom *<input type="text" name="last_name" value="{{ family.father_last_name or family.mother_last_name or '' }}" autocomplete="family-name" required /></label>
+      <label>Email *<input type="email" name="email" value="{{ family.father_email or family.mother_email or '' }}" autocomplete="email" required /></label>
+      <label>Mot de passe *<input type="password" name="password" autocomplete="new-password" required /></label>
       <div class="form-actions">
         <button class="btn btn-primary" type="submit">Créer le compte</button>
       </div>
@@ -282,11 +282,11 @@
     <input type="hidden" name="family_id" value="{{ family.id }}" />
     <label>
       Montant total (€) *
-      <input type="number" name="total_amount" min="0" step="0.01" value="{{ suggested if suggested else '' }}" required />
+      <input type="number" name="total_amount" min="0" step="0.01" value="{{ suggested if suggested else '' }}" autocomplete="off" required />
     </label>
     <label>
       Date
-      <input type="date" name="payment_date" />
+      <input type="text" name="payment_date" class="fr-date-input" autocomplete="off" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" />
     </label>
     <label>
       Moyen de paiement
@@ -312,7 +312,7 @@
         {% for p in family.payments %}
         {% set paid = p.installments | sum(attribute='amount') %}
         <tr>
-          <td>{{ p.payment_date.strftime('%d/%m/%Y') if p.payment_date else '—' }}</td>
+          <td>{{ p.payment_date.strftime('%d-%m-%Y') if p.payment_date else '—' }}</td>
           <td>{{ "%.2f"|format(p.total_amount) }} €</td>
           <td>{% if p.method == 'CB' %}CB{% elif p.method == 'ESP' %}Espèces{% elif p.method == 'CHQ' %}Chèque{% else %}—{% endif %}</td>
           <td>{{ p.installments | length }}</td>
