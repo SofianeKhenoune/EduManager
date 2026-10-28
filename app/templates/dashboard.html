@@ -423,7 +423,7 @@
         <h4>Paiements en attente</h4>
         <p>Familles avec solde à régulariser</p>
       </div>
-      <a href="{{ url_for('main.payments_page') }}" class="action-badge">
+      <a href="{{ url_for('payments.payments_page') }}" class="action-badge">
         <span id="pending-count">0</span>
       </a>
     </div>
@@ -432,7 +432,7 @@
         <h4>Inscriptions en retard</h4>
         <p>Paiements > 30 jours d'impayé</p>
       </div>
-      <a href="{{ url_for('main.payments_page') }}" class="action-badge critical">
+      <a href="{{ url_for('payments.payments_page') }}" class="action-badge critical">
         <span id="late-count">{{ late_count }}</span>
       </a>
     </div>
@@ -441,7 +441,7 @@
         <h4>Demandes RH en attente</h4>
         <p>Congés et remplaçants à valider</p>
       </div>
-      <a href="{{ url_for('main.employees_page') }}" class="action-badge warning">
+      <a href="{{ url_for('employees.employees_page') }}" class="action-badge warning">
         <span id="pending-leaves">{{ pending_leaves }}</span>
       </a>
     </div>
@@ -459,7 +459,7 @@
     <div class="kpi-card">
       <div class="kpi-label">Mes cours</div>
       <div class="kpi-value" id="teacher-courses">-</div>
-      <a href="{{ url_for('main.teacher_my_classes') }}" style="color: #007bff; font-size: 0.875rem;">Voir les détails →</a>
+      <a href="{{ url_for('teachers_portal.teacher_my_classes') }}" style="color: #007bff; font-size: 0.875rem;">Voir les détails →</a>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Élèves inscrits</div>
@@ -486,7 +486,7 @@
     <div class="kpi-card">
       <div class="kpi-label">Enfants inscrits</div>
       <div class="kpi-value" id="parent-students">-</div>
-      <a href="{{ url_for('main.families_page') }}" style="color: #007bff; font-size: 0.875rem;">Voir la famille →</a>
+      <a href="{{ url_for('families.families_page') }}" style="color: #007bff; font-size: 0.875rem;">Voir la famille →</a>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Inscriptions actives</div>
@@ -533,7 +533,7 @@ async function refreshDashboard() {
   btn.textContent = '⏳ Actualisation...';
 
   try {
-    const response = await fetch('{{ url_for("main.api_dashboard") }}');
+    const response = await fetch('{{ url_for("dashboard.api_dashboard") }}');
     const data = await response.json();
 
     // Update KPIs

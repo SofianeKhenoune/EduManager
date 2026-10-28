@@ -2,16 +2,16 @@ import os
 from datetime import timedelta
 
 import click
-from flask import Flask, request, session, url_for
-from flask_login import current_user
-from flask_login import LoginManager
+from flask import Flask, request, url_for
+from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_wtf.csrf import CSRFProtect
 
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 
 def create_app() -> Flask:
@@ -32,52 +32,72 @@ def create_app() -> Flask:
         "yes",
     ) or debug_mode
 
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        if debug_mode:
+            secret_key = "dev"
+        else:
+            raise RuntimeError("SECRET_KEY environment variable is required when FLASK_DEBUG is off.")
+
     app.config.from_mapping(
-        SECRET_KEY="dev",
+        SECRET_KEY=secret_key,
         SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", default_postgres_uri),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TEMPLATES_AUTO_RELOAD=template_auto_reload,
-        ENABLE_BOOTSTRAP_ENDPOINT=os.getenv("ENABLE_BOOTSTRAP_ENDPOINT", "false").lower() in ("1", "true", "yes"),
+        ENABLE_BOOTSTRAP_ENDPOINT=os.getenv("ENABLE_BOOTSTRAP_ENDPOINT", "false").lower()
+        in ("1", "true", "yes"),
         BOOTSTRAP_TOKEN=os.getenv("BOOTSTRAP_TOKEN", ""),
         PERMANENT_SESSION_LIFETIME=timedelta(hours=1),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "false").lower()
+        in ("1", "true", "yes"),
+        REMEMBER_COOKIE_HTTPONLY=True,
+        REMEMBER_COOKIE_SAMESITE="Lax",
+        WTF_CSRF_ENABLED=True,
+        WTF_CSRF_TIME_LIMIT=None,
     )
     app.jinja_env.auto_reload = template_auto_reload
 
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = "main.login"
+    csrf.init_app(app)
+    login_manager.login_view = "auth.login"
     login_manager.login_message = "Veuillez vous connecter pour accéder à cette page."
     login_manager.login_message_category = "warning"
 
-    from app import models
+    from app import models  # noqa: F401
+    from app.routes import register_blueprints
+    from app.seed import seed_demo_data, seed_initial_data
 
     @login_manager.user_loader
     def load_user(user_id):
         return models.User.query.get(int(user_id))
 
-    from app.routes import main_bp
-    from app.seed import seed_demo_data, seed_initial_data
-
-    app.register_blueprint(main_bp)
+    register_blueprints(app)
 
     @app.context_processor
     def inject_template_helpers():
         def can_access(*roles):
-            return current_user.is_authenticated and hasattr(current_user, "has_role") and current_user.has_role(*roles)
+            return (
+                current_user.is_authenticated
+                and hasattr(current_user, "has_role")
+                and current_user.has_role(*roles)
+            )
 
         def home_endpoint() -> str:
             if not current_user.is_authenticated:
-                return "main.login"
+                return "auth.login"
             if current_user.has_role("parent"):
-                return "main.families_page"
+                return "families.families_page"
             if current_user.has_role("teacher"):
-                return "main.teacher_my_classes"
+                return "teachers_portal.teacher_my_classes"
             if current_user.has_role("volunteer"):
-                return "main.planning_page"
+                return "courses.planning_page"
             if current_user.has_role("student"):
-                return "main.student_home"
-            return "main.index"
+                return "student_portal.student_home"
+            return "dashboard.index"
 
         def home_url() -> str:
             return url_for(home_endpoint())
@@ -145,12 +165,12 @@ def create_app() -> Flask:
     def import_employees(excel_path: str) -> None:
         """Importe les employés depuis un fichier Excel."""
         from app.import_employees import import_employees_from_excel
-        
+
         result = import_employees_from_excel(excel_path)
         click.echo(f"Import completed: imported={result['imported']}, skipped={result['skipped']}")
-        if result['errors']:
+        if result["errors"]:
             click.echo("Erreurs :")
-            for error in result['errors']:
+            for error in result["errors"]:
                 click.echo(f"  - {error}")
 
     return app

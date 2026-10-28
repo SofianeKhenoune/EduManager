@@ -6,18 +6,18 @@
     <h1>{{ family.display_name }}</h1>
     <div style="display:flex;gap:.5rem;">
       {% if can_access('parent') and not can_access('admin', 'staff', 'manager') %}
-      <a class="btn btn-secondary" href="{{ url_for('main.payments_page') }}">Mes paiements</a>
+      <a class="btn btn-secondary" href="{{ url_for('payments.payments_page') }}">Mes paiements</a>
       {% else %}
-      <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Retour</a>
+      <a class="btn btn-secondary" href="{{ url_for('families.families_page') }}">Retour</a>
       {% endif %}
-      {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('main.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Confirmer la suppression de cette famille ? Action possible uniquement s\'il n\'y a plus d\'élève actif.')">
+      {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('families.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Confirmer la suppression de cette famille ? Action possible uniquement s\'il n\'y a plus d\'élève actif.')">
         <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
       </form>{% endif %}
     </div>
   </div>
 
   {% if can_access('admin', 'staff', 'manager') %}
-  <form method="post" action="{{ url_for('main.edit_family', family_id=family.id) }}" class="form-grid">
+  <form method="post" action="{{ url_for('families.edit_family', family_id=family.id) }}" class="form-grid">
     <div class="form-group-title">Père / Tuteur légal</div>
     <label>Prénom père<input type="text" name="father_first_name" value="{{ family.father_first_name or '' }}" /></label>
     <label>Nom père<input type="text" name="father_last_name" value="{{ family.father_last_name or '' }}" /></label>
@@ -72,7 +72,7 @@
 <section class="panel section-block">
   <h2>Famille sans élève actif</h2>
   <p class="text-muted">Le dernier élève actif rattache a cette famille vient d'etre supprime. Voulez-vous supprimer cette famille ?</p>
-  <form method="post" action="{{ url_for('main.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Supprimer cette famille maintenant ?')">
+  <form method="post" action="{{ url_for('families.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Supprimer cette famille maintenant ?')">
     <button class="btn btn-danger btn-sm" type="submit">Supprimer la famille</button>
   </form>
 </section>
@@ -127,10 +127,10 @@
           <td>{% if s.is_reinscription %}<span class="badge-reinscription">Réinscription</span>{% else %}Nouveau{% endif %}</td>
           <td>{{ active_count }}</td>
           <td class="td-actions">
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.student_certificate_pdf', student_id=s.id) }}">Attestation</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('documents.student_certificate_pdf', student_id=s.id) }}">Attestation</a>
             {% if can_access('admin', 'staff', 'manager') %}
-            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_student', student_id=s.id) }}">Modifier</a>
-            <form method="post" action="{{ url_for('main.family_remove_student', family_id=family.id, student_id=s.id) }}" class="inline-form" onsubmit="return confirm('Retirer cet élève de la famille ?')">
+            <a class="btn btn-primary btn-sm" href="{{ url_for('students.edit_student', student_id=s.id) }}">Modifier</a>
+            <form method="post" action="{{ url_for('families.family_remove_student', family_id=family.id, student_id=s.id) }}" class="inline-form" onsubmit="return confirm('Retirer cet élève de la famille ?')">
               <button class="btn btn-danger btn-sm" type="submit">Retirer</button>
             </form>
             {% endif %}
@@ -146,7 +146,7 @@
   {% if can_access('admin', 'staff', 'manager') and students_without_family %}
   {% if can_access('admin', 'staff', 'manager') %}<details class="collapsible-block" style="margin-top:1rem;">
     <summary class="collapsible-summary">Rattacher un élève existant (sans famille)</summary>
-    <form method="post" action="{{ url_for('main.family_add_student', family_id=family.id) }}" class="form-inline-row" style="margin-top:.75rem;">
+    <form method="post" action="{{ url_for('families.family_add_student', family_id=family.id) }}" class="form-inline-row" style="margin-top:.75rem;">
       <label>
         Élève
         <select name="student_id" required>
@@ -163,7 +163,7 @@
 
   <details class="collapsible-block" style="margin-top:1rem;">
     <summary class="collapsible-summary">Ajouter un frère / une sœur</summary>
-    <form method="post" action="{{ url_for('main.family_new_student', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+    <form method="post" action="{{ url_for('families.family_new_student', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
       <label>Prénom *<input type="text" name="first_name" autocomplete="given-name" required /></label>
       <label>Nom *<input type="text" name="last_name" autocomplete="family-name" required /></label>
       <label>
@@ -244,7 +244,7 @@
   <p>Compte actif : <strong>{{ family.user.first_name }} {{ family.user.last_name }}</strong> — {{ family.user.email }}</p>
   <details class="collapsible-block" style="margin-top:.75rem;">
     <summary class="collapsible-summary">Modifier le compte</summary>
-    <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+    <form method="post" action="{{ url_for('families.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
       <input type="hidden" name="action" value="update" />
       <label>Prénom *<input type="text" name="first_name" value="{{ family.user.first_name }}" autocomplete="given-name" required /></label>
       <label>Nom *<input type="text" name="last_name" value="{{ family.user.last_name }}" autocomplete="family-name" required /></label>
@@ -255,7 +255,7 @@
       </div>
     </form>
   </details>
-  <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="inline-form" style="margin-top:.5rem;" onsubmit="return confirm('Supprimer le compte parent ?')">
+  <form method="post" action="{{ url_for('families.family_set_parent', family_id=family.id) }}" class="inline-form" style="margin-top:.5rem;" onsubmit="return confirm('Supprimer le compte parent ?')">
     <input type="hidden" name="action" value="remove" />
     <button class="btn btn-danger btn-sm" type="submit">Supprimer le compte</button>
   </form>
@@ -263,7 +263,7 @@
   <p class="text-muted" style="margin-bottom:.75rem;">Aucun compte de connexion pour cette famille.</p>
   <details class="collapsible-block">
     <summary class="collapsible-summary">➕ Créer un compte parent</summary>
-    <form method="post" action="{{ url_for('main.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
+    <form method="post" action="{{ url_for('families.family_set_parent', family_id=family.id) }}" class="form-grid" style="margin-top:.75rem;">
       <input type="hidden" name="action" value="create" />
       <label>Prénom *<input type="text" name="first_name" value="{{ family.father_first_name or family.mother_first_name or '' }}" autocomplete="given-name" required /></label>
       <label>Nom *<input type="text" name="last_name" value="{{ family.father_last_name or family.mother_last_name or '' }}" autocomplete="family-name" required /></label>
@@ -282,7 +282,7 @@
   <h2>Paiements</h2>
 
   {% if can_access('admin', 'staff', 'manager') %}
-  <form method="post" action="{{ url_for('main.payments_page') }}" class="form-grid">
+  <form method="post" action="{{ url_for('payments.payments_page') }}" class="form-grid">
     <input type="hidden" name="family_id" value="{{ family.id }}" />
     <label>
       Montant total (€) *
@@ -322,8 +322,8 @@
           <td>{{ p.installments | length }}</td>
           <td class="{% if paid >= p.total_amount %}paid-full{% elif paid > 0 %}paid-partial{% else %}paid-none{% endif %}">{{ "%.2f"|format(paid) }} €</td>
           <td class="td-actions">
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.payment_detail', payment_id=p.id) }}">Détail</a>
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.payment_receipt_pdf', payment_id=p.id) }}">Reçu PDF</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('payments.payment_detail', payment_id=p.id) }}">Détail</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('payments.payment_receipt_pdf', payment_id=p.id) }}">Reçu PDF</a>
           </td>
         </tr>
         {% else %}

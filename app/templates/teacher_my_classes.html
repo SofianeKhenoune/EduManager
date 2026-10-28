@@ -29,8 +29,8 @@
         <li>👥 {{ course.active_enrollments_count }} élève{{ 's' if course.active_enrollments_count != 1 else '' }} / {{ course.capacity }}</li>
       </ul>
       <div class="card-actions">
-        <a class="btn btn-primary" href="{{ url_for('main.teacher_course_detail', course_id=course.id) }}">Gérer la classe</a>
-        <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
+        <a class="btn btn-primary" href="{{ url_for('teachers_portal.teacher_course_detail', course_id=course.id) }}">Gérer la classe</a>
+        <a class="btn btn-secondary" href="{{ url_for('courses.planning_page') }}">Planning</a>
       </div>
     </article>
     {% endfor %}

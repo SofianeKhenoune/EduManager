@@ -5,6 +5,29 @@ document.addEventListener('DOMContentLoaded', () => {
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '');
 
+  const injectCsrfTokens = () => {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    const token = meta ? meta.getAttribute('content') : '';
+    if (!token) {
+      return;
+    }
+    document.querySelectorAll('form').forEach((form) => {
+      const method = (form.getAttribute('method') || 'get').toLowerCase();
+      if (method !== 'post') {
+        return;
+      }
+      if (form.querySelector('input[name="csrf_token"]')) {
+        return;
+      }
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'csrf_token';
+      input.value = token;
+      form.prepend(input);
+    });
+  };
+  injectCsrfTokens();
+
   const initAutoToggleForms = () => {
     const candidateForms = document.querySelectorAll(
       'form.form-grid, form.compact-form, form.form-inline-row',

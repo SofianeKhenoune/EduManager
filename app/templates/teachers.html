@@ -2,13 +2,13 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Enseignants</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}"
       >Retour au tableau de bord</a
     >
   </div>
   <div class="section-actions-row">
-    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
-    <form method="post" action="{{ url_for('main.delete_all_teachers') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les enseignants sans cours affectés ? Cette action est irréversible.')">
+    <a class="btn btn-secondary" href="{{ url_for('courses.planning_page') }}">Planning</a>
+    <form method="post" action="{{ url_for('teachers_admin.delete_all_teachers') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les enseignants sans cours affectés ? Cette action est irréversible.')">
       <button class="btn btn-danger" type="submit">Supprimer tous les enseignants</button>
     </form>
   </div>
@@ -37,7 +37,7 @@
       {% else %}
       <p style="color: var(--ink-soft); margin: 0">
         Aucun salarié disponible — tous sont déjà enseignants, ou il n'y a pas encore de salarié.
-        <a href="{{ url_for('main.employees_page') }}">Ajouter un salarié</a>
+        <a href="{{ url_for('employees.employees_page') }}">Ajouter un salarié</a>
       </p>
       {% endif %}
     </div>
@@ -56,7 +56,7 @@
       {% else %}
       <p style="color: var(--ink-soft); margin: 0">
         Aucun bénévole disponible — tous sont déjà enseignants, ou il n'y a pas encore de bénévole.
-        <a href="{{ url_for('main.volunteers_page') }}">Ajouter un bénévole</a>
+        <a href="{{ url_for('teachers_admin.volunteers_page') }}">Ajouter un bénévole</a>
       </p>
       {% endif %}
     </div>
@@ -107,7 +107,7 @@
           <td>{{ teacher.user.email }}</td>
           <td>{{ teacher.subject or '-' }}</td>
           <td>{{ teacher.courses | length }}</td>
-          <td><a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_teacher', teacher_id=teacher.id) }}">Modifier</a></td>
+          <td><a class="btn btn-primary btn-sm" href="{{ url_for('teachers_admin.edit_teacher', teacher_id=teacher.id) }}">Modifier</a></td>
         </tr>
         {% else %}
         <tr><td colspan="5">Aucun enseignant pour le moment.</td></tr>
@@ -115,6 +115,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = teachers_pagination %}{% set endpoint_name = 'main.teachers_page' %}{% include '_pagination.html' %}
+  {% set pagination = teachers_pagination %}{% set endpoint_name = 'teachers_admin.teachers_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

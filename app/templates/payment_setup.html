@@ -70,7 +70,7 @@
 
     <div class="form-actions" style="grid-column: 1 / -1;">
       <button class="btn btn-primary" type="submit">Enregistrer le paiement</button>
-      <a class="btn btn-secondary" href="{{ url_for('main.payment_detail', payment_id=payment.id) }}">Ignorer cette étape</a>
+      <a class="btn btn-secondary" href="{{ url_for('payments.payment_detail', payment_id=payment.id) }}">Ignorer cette étape</a>
     </div>
   </form>
 </section>

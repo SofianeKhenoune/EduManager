@@ -2,12 +2,12 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Bénévoles</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}"
       >Retour au tableau de bord</a
     >
   </div>
   <div class="section-actions-row">
-    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning</a>
+    <a class="btn btn-secondary" href="{{ url_for('courses.planning_page') }}">Planning</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -53,7 +53,7 @@
           <td>{{ volunteer.user.email }}</td>
           <td>{{ volunteer.skills or '-' }}</td>
           <td>{{ volunteer.courses | length }}</td>
-          <td><a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_volunteer', volunteer_id=volunteer.id) }}">Modifier</a></td>
+          <td><a class="btn btn-primary btn-sm" href="{{ url_for('teachers_admin.edit_volunteer', volunteer_id=volunteer.id) }}">Modifier</a></td>
         </tr>
         {% else %}
         <tr><td colspan="5">Aucun bénévole pour le moment.</td></tr>
@@ -61,6 +61,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = volunteers_pagination %}{% set endpoint_name = 'main.volunteers_page' %}{% include '_pagination.html' %}
+  {% set pagination = volunteers_pagination %}{% set endpoint_name = 'teachers_admin.volunteers_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

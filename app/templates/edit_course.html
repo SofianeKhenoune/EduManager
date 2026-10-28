@@ -3,7 +3,7 @@ endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ course.title }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.courses_page') }}"
+    <a class="btn btn-secondary" href="{{ url_for('courses.courses_page') }}"
       >Retour</a
     >
   </div>
@@ -105,7 +105,7 @@ endblock %} {% block content %}
   {% endif %}
   <form
     method="post"
-    action="{{ url_for('main.delete_course', course_id=course.id) }}"
+    action="{{ url_for('courses.delete_course', course_id=course.id) }}"
     onsubmit="return confirm('Supprimer définitivement ce cours ?');"
   >
     <div class="form-actions">

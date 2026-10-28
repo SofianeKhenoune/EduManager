@@ -2,7 +2,7 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ student.first_name }} {{ student.last_name }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}">Retour</a>
+    <a class="btn btn-secondary" href="{{ url_for('students.students_page') }}">Retour</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -57,7 +57,7 @@
   <h2>Supprimer cet élève</h2>
   <form
     method="post"
-    action="{{ url_for('main.delete_student', student_id=student.id) }}"
+    action="{{ url_for('students.delete_student', student_id=student.id) }}"
     onsubmit="return confirm('{% if student.family and (student.family.students | length) == 1 and student.active_courses_count > 0 %}Cet élève est le seul actif de sa famille. Continuer ?{% else %}Supprimer définitivement cet élève ?{% endif %}');"
   >
     <div class="form-actions">

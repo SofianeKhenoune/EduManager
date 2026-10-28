@@ -8,8 +8,8 @@
       <p class="text-muted">Matricule {{ employee.employee_id }} · {{ employee.department.name if employee.department else 'Sans département' }}</p>
     </div>
     <div class="section-actions-row">
-      <a class="btn btn-secondary" href="{{ url_for('main.edit_employee', emp_id=employee.id) }}">Modifier</a>
-      <a class="btn btn-secondary" href="{{ url_for('main.employees_page') }}">Retour</a>
+      <a class="btn btn-secondary" href="{{ url_for('employees.edit_employee', emp_id=employee.id) }}">Modifier</a>
+      <a class="btn btn-secondary" href="{{ url_for('employees.employees_page') }}">Retour</a>
     </div>
   </div>
 
@@ -91,7 +91,7 @@
             <td>{{ leave.leave_type }}</td>
             <td>{{ leave.status }}</td>
             <td>
-              <form method="post" action="{{ url_for('main.update_leave_status', emp_id=employee.id, leave_id=leave.id) }}" class="inline-form">
+              <form method="post" action="{{ url_for('employees.update_leave_status', emp_id=employee.id, leave_id=leave.id) }}" class="inline-form">
                 <select name="status" onchange="this.form.submit()">
                   {% if leave.status == 'pending' %}
                   <option value="pending" selected>En attente</option>

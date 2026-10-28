@@ -5,10 +5,10 @@
     <a class="btn btn-secondary" href="{{ home_url() }}">{{ home_label() }}</a>
   </div>
   <div class="section-actions-row">
-    <form method="post" action="{{ url_for('main.delete_all_courses') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les cours ? Les séances et inscriptions associées seront également supprimées. Cette action est irréversible.')">
+    <form method="post" action="{{ url_for('courses.delete_all_courses') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les cours ? Les séances et inscriptions associées seront également supprimées. Cette action est irréversible.')">
       <button class="btn btn-danger" type="submit">Supprimer tous les cours</button>
     </form>
-    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Vue planning</a>
+    <a class="btn btn-secondary" href="{{ url_for('courses.planning_page') }}">Vue planning</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -152,8 +152,8 @@
             endif %}
           </td>
           <td>
-            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_course', course_id=course.id) }}">Modifier</a>
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.session_detail', session_id=course.sessions[0].id) if course.sessions else url_for('main.planning_page') }}">Presence</a>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('courses.edit_course', course_id=course.id) }}">Modifier</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('courses.session_detail', session_id=course.sessions[0].id) if course.sessions else url_for('courses.planning_page') }}">Presence</a>
           </td>
         </tr>
         {% else %}
@@ -164,6 +164,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = courses_pagination %}{% set endpoint_name = 'main.courses_page' %}{% include '_pagination.html' %}
+  {% set pagination = courses_pagination %}{% set endpoint_name = 'courses.courses_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

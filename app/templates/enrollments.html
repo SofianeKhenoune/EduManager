@@ -2,7 +2,7 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Inscriptions</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour au tableau de bord</a>
   </div>
 
   {% if quick_flow and selected_student_id %}
@@ -63,7 +63,7 @@
       <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher..." />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
-      <a class="btn btn-secondary" href="{{ url_for('main.enrollments_page', student_id=selected_student_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
+      <a class="btn btn-secondary" href="{{ url_for('enrollments.enrollments_page', student_id=selected_student_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
       {% endif %}
     </form>
   </div>
@@ -86,7 +86,7 @@
           <td>{{ e.course.title }}</td>
           <td>{{ e.enrollment_date.strftime('%d-%m-%Y') if e.enrollment_date else '—' }}</td>
           <td>
-            <form method="post" action="{{ url_for('main.edit_enrollment', enrollment_id=e.id) }}" class="inline-form">
+            <form method="post" action="{{ url_for('enrollments.edit_enrollment', enrollment_id=e.id) }}" class="inline-form">
               <select name="status" onchange="this.form.submit()" class="status-select status-{{ e.status }}">
                 {% if e.status == 'active' %}
                 <option value="active" selected>Actif</option>
@@ -105,7 +105,7 @@
             </form>
           </td>
           <td>
-            <form method="post" action="{{ url_for('main.delete_enrollment', enrollment_id=e.id) }}" onsubmit="return confirm('Supprimer cette inscription ?')">
+            <form method="post" action="{{ url_for('enrollments.delete_enrollment', enrollment_id=e.id) }}" onsubmit="return confirm('Supprimer cette inscription ?')">
               <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
             </form>
           </td>
@@ -116,6 +116,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = enrollments_pagination %}{% set endpoint_name = 'main.enrollments_page' %}{% include '_pagination.html' %}
+  {% set pagination = enrollments_pagination %}{% set endpoint_name = 'enrollments.enrollments_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

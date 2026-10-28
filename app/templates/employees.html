@@ -3,12 +3,12 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Employés</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}"
       >Retour au tableau de bord</a
     >
   </div>
   <div class="section-actions-row">
-    <a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='employees') }}">Exporter CSV</a>
+    <a class="btn btn-secondary" href="{{ url_for('documents.export_csv', dataset='employees') }}">Exporter CSV</a>
   </div>
 
   <form method="post" class="form-grid">
@@ -92,8 +92,8 @@
           </td>
           <td>{{ employee.leave_requests | length }}</td>
           <td>
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.employee_detail', emp_id=employee.id) }}">Fiche</a>
-            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_employee', emp_id=employee.id) }}">Modifier</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('employees.employee_detail', emp_id=employee.id) }}">Fiche</a>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('employees.edit_employee', emp_id=employee.id) }}">Modifier</a>
           </td>
         </tr>
         {% else %}
@@ -104,6 +104,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = employees_pagination %}{% set endpoint_name = 'main.employees_page' %}{% include '_pagination.html' %}
+  {% set pagination = employees_pagination %}{% set endpoint_name = 'employees.employees_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

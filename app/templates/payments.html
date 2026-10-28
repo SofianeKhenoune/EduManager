@@ -3,9 +3,9 @@
   <div class="section-head">
     <h1>{% if parent_view %}Mes paiements{% else %}Paiements{% endif %}</h1>
     {% if parent_view %}
-    <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Retour à ma famille</a>
+    <a class="btn btn-secondary" href="{{ url_for('families.families_page') }}">Retour à ma famille</a>
     {% else %}
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour au tableau de bord</a>
     {% endif %}
   </div>
 
@@ -83,14 +83,14 @@
   <div class="section-head section-head-search">
     <h2>{% if parent_view %}Historique des paiements{% else %}Liste des paiements{% endif %}</h2>
     <div class="section-actions-row">
-      {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='payments') }}">Exporter CSV</a>{% endif %}
+      {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('documents.export_csv', dataset='payments') }}">Exporter CSV</a>{% endif %}
     <form method="get" class="search-form" role="search">
       {% if selected_family_id %}<input type="hidden" name="family_id" value="{{ selected_family_id }}" />{% endif %}
       {% if quick_flow %}<input type="hidden" name="quick_flow" value="1" />{% endif %}
       <input type="search" name="q" value="{{ search_query }}" placeholder="{% if parent_view %}Rechercher un paiement...{% else %}Rechercher une famille...{% endif %}" />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
-      <a class="btn btn-secondary" href="{{ url_for('main.payments_page', family_id=selected_family_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
+      <a class="btn btn-secondary" href="{{ url_for('payments.payments_page', family_id=selected_family_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>
       {% endif %}
     </form>
     </div>
@@ -112,7 +112,7 @@
       <tbody>
         {% for p in payments %}
         <tr>
-          <td>{% if p.family %}<a href="{{ url_for('main.family_detail', family_id=p.family.id) }}">{{ p.family.display_name }}</a>{% else %}—{% endif %}</td>
+          <td>{% if p.family %}<a href="{{ url_for('families.family_detail', family_id=p.family.id) }}">{{ p.family.display_name }}</a>{% else %}—{% endif %}</td>
           <td>{{ "%.2f"|format(p.total_amount) }} €</td>
           <td>{{ p.payment_date.strftime('%d-%m-%Y') if p.payment_date else '—' }}</td>
           <td>
@@ -126,9 +126,9 @@
             {{ "%.2f"|format(p.installments_total) }} €
           </td>
           <td class="td-actions">
-            <a class="btn btn-secondary" href="{{ url_for('main.payment_detail', payment_id=p.id) }}">Détail</a>
-            <a class="btn btn-secondary" href="{{ url_for('main.payment_receipt_pdf', payment_id=p.id) }}">PDF</a>
-            {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('main.delete_payment', payment_id=p.id) }}" onsubmit="return confirm('Supprimer ce paiement et ses échéances ?')">
+            <a class="btn btn-secondary" href="{{ url_for('payments.payment_detail', payment_id=p.id) }}">Détail</a>
+            <a class="btn btn-secondary" href="{{ url_for('payments.payment_receipt_pdf', payment_id=p.id) }}">PDF</a>
+            {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('payments.delete_payment', payment_id=p.id) }}" onsubmit="return confirm('Supprimer ce paiement et ses échéances ?')">
               <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
             </form>{% endif %}
           </td>
@@ -139,6 +139,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = payments_pagination %}{% set endpoint_name = 'main.payments_page' %}{% include '_pagination.html' %}
+  {% set pagination = payments_pagination %}{% set endpoint_name = 'payments.payments_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

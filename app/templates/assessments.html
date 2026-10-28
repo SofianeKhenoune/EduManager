@@ -48,7 +48,7 @@
           <td>{{ assessment.category }}</td>
           <td>{% if assessment.score is not none %}{{ assessment.score }}/{{ assessment.max_score }} ({{ assessment.percentage }}%){% else %}Observation{% endif %}</td>
           <td>
-            <form method="post" action="{{ url_for('main.delete_assessment', assessment_id=assessment.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
+            <form method="post" action="{{ url_for('assessments.delete_assessment', assessment_id=assessment.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
               <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
             </form>
           </td>
@@ -59,6 +59,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = assessments_pagination %}{% set endpoint_name = 'main.assessments_page' %}{% include '_pagination.html' %}
+  {% set pagination = assessments_pagination %}{% set endpoint_name = 'assessments.assessments_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

@@ -2,10 +2,10 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Élèves</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    <a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour au tableau de bord</a>
   </div>
   <div class="section-actions-row">
-    <a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='students') }}">Exporter CSV</a>
+    <a class="btn btn-secondary" href="{{ url_for('documents.export_csv', dataset='students') }}">Exporter CSV</a>
   </div>
 
   <details class="collapsible-block">
@@ -118,7 +118,7 @@
       <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher un élève..." aria-label="Rechercher un élève" />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
-      <a class="btn btn-secondary" href="{{ url_for('main.students_page') }}">Réinitialiser</a>
+      <a class="btn btn-secondary" href="{{ url_for('students.students_page') }}">Réinitialiser</a>
       {% endif %}
     </form>
   </div>
@@ -143,20 +143,20 @@
           <td>{{ student.last_name }} {{ student.first_name }}</td>
           <td>{{ student.age if student.age is not none else '—' }}</td>
           <td>{% if student.gender == 'M' %}Garçon{% elif student.gender == 'F' %}Fille{% else %}—{% endif %}</td>
-          <td>{% if student.family %}<a href="{{ url_for('main.family_detail', family_id=student.family.id) }}">{{ student.family.display_name }}</a>{% else %}—{% endif %}</td>
+          <td>{% if student.family %}<a href="{{ url_for('families.family_detail', family_id=student.family.id) }}">{{ student.family.display_name }}</a>{% else %}—{% endif %}</td>
           <td>{{ student.site.name if student.site else '—' }}</td>
           <td>{% if student.is_reinscription %}<span class="badge-reinscription">Oui</span>{% else %}Non{% endif %}</td>
           <td>{% if student.lives_alone %}<span class="badge-reinscription">Oui</span>{% else %}Non{% endif %}</td>
-          <td><a class="btn btn-secondary btn-sm" href="{{ url_for('main.student_certificate_pdf', student_id=student.id) }}">PDF</a></td>
+          <td><a class="btn btn-secondary btn-sm" href="{{ url_for('documents.student_certificate_pdf', student_id=student.id) }}">PDF</a></td>
           <td class="td-actions">
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.enrollments_page', student_id=student.id, quick_flow=1) }}">Inscrire</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('enrollments.enrollments_page', student_id=student.id, quick_flow=1) }}">Inscrire</a>
             {% if student.family_id %}
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.payments_page', family_id=student.family_id, quick_flow=1) }}">Paiement</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('payments.payments_page', family_id=student.family_id, quick_flow=1) }}">Paiement</a>
             {% endif %}
-            <a class="btn btn-primary btn-sm" href="{{ url_for('main.edit_student', student_id=student.id) }}">Modifier</a>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('students.edit_student', student_id=student.id) }}">Modifier</a>
             <form
               method="post"
-              action="{{ url_for('main.delete_student', student_id=student.id) }}"
+              action="{{ url_for('students.delete_student', student_id=student.id) }}"
               class="inline-form"
               onsubmit="return confirm('{% if student.family and (student.family.students | length) == 1 and student.active_courses_count > 0 %}Cet élève est le seul actif de sa famille. Continuer ?{% else %}Supprimer cet élève ?{% endif %}')"
             >
@@ -170,7 +170,7 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = students_pagination %}{% set endpoint_name = 'main.students_page' %}{% include '_pagination.html' %}
+  {% set pagination = students_pagination %}{% set endpoint_name = 'students.students_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}
 

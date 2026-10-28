@@ -12,7 +12,7 @@
         {% if course.day %}{{ course.day | capitalize }}{% if course.start_hour is not none %} {{ '%02d'|format(course.start_hour) }}h–{{ '%02d'|format(course.end_hour) }}h{% endif %}{% endif %}
       </p>
     </div>
-    <a class="btn btn-secondary" href="{{ url_for('main.teacher_my_classes') }}">Mes classes</a>
+    <a class="btn btn-secondary" href="{{ url_for('teachers_portal.teacher_my_classes') }}">Mes classes</a>
   </div>
 
   {# ── KPI strip ── #}
@@ -36,7 +36,7 @@
 <section class="panel section-block">
   <div class="section-head">
     <h2>Élèves &amp; assiduité</h2>
-    <a class="btn btn-secondary" href="{{ url_for('main.planning_page') }}">Planning / Appel</a>
+    <a class="btn btn-secondary" href="{{ url_for('courses.planning_page') }}">Planning / Appel</a>
   </div>
 
   <div class="table-wrap">
@@ -102,7 +102,7 @@
             {% else %}<span class="badge badge-info">Planifiée</span>
             {% endif %}
           </td>
-          <td><a class="btn btn-secondary" href="{{ url_for('main.session_detail', session_id=cs.id) }}">Appel</a></td>
+          <td><a class="btn btn-secondary" href="{{ url_for('courses.session_detail', session_id=cs.id) }}">Appel</a></td>
         </tr>
         {% else %}
         <tr><td colspan="4" class="empty-row">Aucune séance planifiée.</td></tr>
@@ -119,7 +119,7 @@
   </div>
 
   {# Add assessment form (toggle) #}
-  <form method="post" action="{{ url_for('main.teacher_add_assessment', course_id=course.id) }}" class="form-grid compact-form">
+  <form method="post" action="{{ url_for('teachers_portal.teacher_add_assessment', course_id=course.id) }}" class="form-grid compact-form">
     <label>Élève *
       <select name="student_id" required>
         <option value="">Sélectionner</option>
@@ -159,7 +159,7 @@
           </td>
           <td>{{ a.appreciation or '—' }}</td>
           <td>
-            <form method="post" action="{{ url_for('main.teacher_delete_assessment', course_id=course.id, assessment_id=a.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
+            <form method="post" action="{{ url_for('teachers_portal.teacher_delete_assessment', course_id=course.id, assessment_id=a.id) }}" onsubmit="return confirm('Supprimer cette évaluation ?')">
               <button class="btn btn-danger btn-sm" type="submit">✕</button>
             </form>
           </td>

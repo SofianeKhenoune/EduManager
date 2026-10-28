@@ -3,7 +3,7 @@ endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ employee.user.first_name }} {{ employee.user.last_name }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.employees_page') }}"
+    <a class="btn btn-secondary" href="{{ url_for('employees.employees_page') }}"
       >Retour</a
     >
   </div>
@@ -263,7 +263,7 @@ endblock %} {% block content %}
   <h2>Supprimer cet employé</h2>
   <form
     method="post"
-    action="{{ url_for('main.delete_employee', emp_id=employee.id) }}"
+    action="{{ url_for('employees.delete_employee', emp_id=employee.id) }}"
     onsubmit="return confirm('Supprimer définitivement cet employé ?');"
   >
     <div class="form-actions">

@@ -2,7 +2,7 @@
 {% block title %}Sites | EduManager{% endblock %}
 {% block content %}
 <section class="panel section-block">
-  <div class="section-head"><h1>Sites</h1><a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour</a></div>
+  <div class="section-head"><h1>Sites</h1><a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour</a></div>
   <form method="post" class="form-grid compact-form">
     <label>Nom<input type="text" name="name" required /></label>
     <label>Adresse<input type="text" name="address" /></label>
@@ -20,13 +20,13 @@
           <td class="td-actions">
             <details class="inline-details">
               <summary class="btn btn-primary btn-sm">Modifier</summary>
-              <form method="post" action="{{ url_for('main.edit_site', site_id=site.id) }}" class="form-grid compact-form compact-card">
+              <form method="post" action="{{ url_for('sites.edit_site', site_id=site.id) }}" class="form-grid compact-form compact-card">
                 <label>Nom<input type="text" name="name" value="{{ site.name }}" required /></label>
                 <label>Adresse<input type="text" name="address" value="{{ site.address or '' }}" /></label>
                 <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div>
               </form>
             </details>
-            <form method="post" action="{{ url_for('main.delete_site', site_id=site.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce site ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
+            <form method="post" action="{{ url_for('sites.delete_site', site_id=site.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce site ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
           </td>
         </tr>
         {% else %}
@@ -35,6 +35,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = sites_pagination %}{% set endpoint_name = 'main.sites_page' %}{% include '_pagination.html' %}
+  {% set pagination = sites_pagination %}{% set endpoint_name = 'sites.sites_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

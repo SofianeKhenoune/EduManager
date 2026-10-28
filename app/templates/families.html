@@ -2,8 +2,8 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>{% if parent_view %}Mon espace famille{% else %}Familles{% endif %}</h1>
-    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-primary" href="{{ url_for('main.students_page') }}">Ajouter un élève</a>{% endif %}
-    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>{% endif %}
+    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-primary" href="{{ url_for('students.students_page') }}">Ajouter un élève</a>{% endif %}
+    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour au tableau de bord</a>{% endif %}
   </div>
 </section>
 
@@ -14,7 +14,7 @@
       <input type="search" name="q" value="{{ search_query }}" placeholder="{% if parent_view %}Rechercher dans mes accès famille...{% else %}Rechercher une famille...{% endif %}" />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
-      <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Réinitialiser</a>
+      <a class="btn btn-secondary" href="{{ url_for('families.families_page') }}">Réinitialiser</a>
       {% endif %}
     </form>
   </div>
@@ -38,7 +38,7 @@
         {% for f in families %}
         <tr>
           <td>
-            <a href="{{ url_for('main.family_detail', family_id=f.id) }}" class="link-name">
+            <a href="{{ url_for('families.family_detail', family_id=f.id) }}" class="link-name">
               {{ f.display_name }}
             </a>
             {% if f.father_first_name or f.mother_first_name %}
@@ -57,7 +57,7 @@
           <td>{{ f.students | length }}</td>
           <td>{{ "%.2f"|format(f.total_paid) }} EUR</td>
           <td class="td-actions">
-            <a class="btn btn-secondary btn-sm" href="{{ url_for('main.family_detail', family_id=f.id) }}">Détail</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('families.family_detail', family_id=f.id) }}">Détail</a>
           </td>
         </tr>
         {% else %}
@@ -66,6 +66,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = families_pagination %}{% set endpoint_name = 'main.families_page' %}{% include '_pagination.html' %}
+  {% set pagination = families_pagination %}{% set endpoint_name = 'families.families_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

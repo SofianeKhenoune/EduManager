@@ -2,7 +2,7 @@
 {% block title %}Departements | EduManager{% endblock %}
 {% block content %}
 <section class="panel section-block">
-  <div class="section-head"><h1>Departements</h1><a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour</a></div>
+  <div class="section-head"><h1>Departements</h1><a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Retour</a></div>
   <form method="post" class="form-grid compact-form">
     <label>Nom<input type="text" name="name" required /></label>
     <label>Manager
@@ -27,7 +27,7 @@
           <td class="td-actions">
             <details class="inline-details">
               <summary class="btn btn-primary btn-sm">Modifier</summary>
-              <form method="post" action="{{ url_for('main.edit_department', department_id=department.id) }}" class="form-grid compact-form compact-card">
+              <form method="post" action="{{ url_for('employees.edit_department', department_id=department.id) }}" class="form-grid compact-form compact-card">
                 <label>Nom<input type="text" name="name" value="{{ department.name }}" required /></label>
                 <label>Manager
                   <select name="manager_id">
@@ -44,7 +44,7 @@
                 <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div>
               </form>
             </details>
-            <form method="post" action="{{ url_for('main.delete_department', department_id=department.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce département ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
+            <form method="post" action="{{ url_for('employees.delete_department', department_id=department.id) }}" class="inline-form" onsubmit="return confirm('Supprimer ce département ?')"><button class="btn btn-danger btn-sm" type="submit">Supprimer</button></form>
           </td>
         </tr>
         {% else %}
@@ -53,6 +53,6 @@
       </tbody>
     </table>
   </div>
-  {% set pagination = departments_pagination %}{% set endpoint_name = 'main.departments_page' %}{% include '_pagination.html' %}
+  {% set pagination = departments_pagination %}{% set endpoint_name = 'employees.departments_page' %}{% include '_pagination.html' %}
 </section>
 {% endblock %}

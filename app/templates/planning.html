@@ -74,7 +74,7 @@
             <td>{{ session.course.title }}</td>
             <td>{{ session.topic or '—' }}</td>
             <td>{{ session.status }}</td>
-            <td><a class="btn btn-secondary btn-sm" href="{{ url_for('main.session_detail', session_id=session.id) }}">Presence</a></td>
+            <td><a class="btn btn-secondary btn-sm" href="{{ url_for('courses.session_detail', session_id=session.id) }}">Presence</a></td>
           </tr>
           {% else %}
           <tr><td colspan="5" class="empty-row">Aucune séance.</td></tr>

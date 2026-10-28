@@ -3,7 +3,7 @@ endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
     <h1>{{ volunteer.user.first_name }} {{ volunteer.user.last_name }}</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.volunteers_page') }}"
+    <a class="btn btn-secondary" href="{{ url_for('teachers_admin.volunteers_page') }}"
       >Retour</a
     >
   </div>
@@ -65,7 +65,7 @@ endblock %} {% block content %}
   {% else %}
   <form
     method="post"
-    action="{{ url_for('main.delete_volunteer', volunteer_id=volunteer.id) }}"
+    action="{{ url_for('teachers_admin.delete_volunteer', volunteer_id=volunteer.id) }}"
     onsubmit="return confirm('Supprimer définitivement ce bénévole ?');"
   >
     <div class="form-actions">

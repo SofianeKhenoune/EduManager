@@ -11,6 +11,7 @@ services:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - TEMPLATES_AUTO_RELOAD=true
+      - SECRET_KEY=local-dev-secret-change-me
       - POSTGRES_DB=EduManager
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
@@ -18,6 +19,7 @@ services:
       - POSTGRES_PORT=5432
       - ENABLE_BOOTSTRAP_ENDPOINT=true
       - BOOTSTRAP_TOKEN=local-bootstrap-token
+      - SESSION_COOKIE_SECURE=false
     volumes:
       - .:/app
     depends_on:
