@@ -9,15 +9,26 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
   </head>
   <body>
     <header class="topbar">
       <div class="page-shell topbar-inner">
-        <a class="brand" href="{{ url_for('main.index') }}">
+        <a class="brand" href="{{ home_url() }}">
           <span class="brand-badge">EM</span>
           <span>EduManager</span>
         </a>
         <nav class="nav-links" id="main-nav" aria-label="Navigation principale">
+          {% if current_user.is_authenticated and can_access('parent') and not can_access('admin', 'staff', 'manager') %}
+          <a href="{{ url_for('main.families_page') }}">Ma famille</a>
+          <a href="{{ url_for('main.payments_page') }}">Mes paiements</a>
+          {% elif current_user.is_authenticated and can_access('student') and not can_access('admin', 'staff', 'manager', 'teacher', 'volunteer', 'parent') %}
+          <a href="{{ url_for('main.student_home') }}">Mon espace étudiant</a>
+          {% elif current_user.is_authenticated and can_access('volunteer') and not can_access('admin', 'staff', 'manager', 'teacher') %}
+          <a href="{{ url_for('main.planning_page') }}">Mon planning</a>
+          <a href="{{ url_for('main.courses_page') }}">Cours</a>
+          <a href="{{ url_for('main.assessments_page') }}">Évaluations</a>
+          {% else %}
           {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.index') }}">Tableau de bord</a>{% endif %}
           {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager', 'teacher', 'parent') %}
           <div class="nav-dropdown">
@@ -29,14 +40,14 @@
               {% if can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.students_page') }}" role="menuitem">Élèves</a>{% endif %}
               {% if can_access('admin', 'staff', 'manager', 'parent') %}<a href="{{ url_for('main.families_page') }}" role="menuitem">Familles</a>{% endif %}
               {% if can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.enrollments_page') }}" role="menuitem">Inscriptions</a>{% endif %}
-              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.teacher_my_classes') }}" role="menuitem">Mes classes</a>{% endif %}
-              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.courses_page') }}" role="menuitem">Cours</a>{% endif %}
-              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.planning_page') }}" role="menuitem">Planning</a>{% endif %}
-              {% if can_access('admin', 'staff', 'manager', 'teacher') %}<a href="{{ url_for('main.assessments_page') }}" role="menuitem">Évaluations</a>{% endif %}
+              {% if can_access('admin', 'staff', 'manager', 'teacher', 'volunteer') %}<a href="{{ url_for('main.teacher_my_classes') }}" role="menuitem">{% if can_access('teacher') %}Mes classes{% else %}Classes{% endif %}</a>{% endif %}
+              {% if can_access('admin', 'manager', 'teacher') %}<a href="{{ url_for('main.courses_page') }}" role="menuitem">Cours</a>{% endif %}
+              {% if can_access('admin', 'manager', 'teacher') %}<a href="{{ url_for('main.planning_page') }}" role="menuitem">Planning</a>{% endif %}
+              {% if can_access('admin', 'manager', 'teacher') %}<a href="{{ url_for('main.assessments_page') }}" role="menuitem">Évaluations</a>{% endif %}
             </div>
           </div>
           {% endif %}
-          {% if current_user.is_authenticated and can_access('admin', 'staff', 'manager') %}
+          {% if current_user.is_authenticated and can_access('admin', 'manager') %}
           <div class="nav-dropdown">
             <button class="nav-drop-btn" type="button" aria-haspopup="true" aria-expanded="false">
               Administration
@@ -51,9 +62,10 @@
               <a href="{{ url_for('main.positions_page') }}" role="menuitem">Postes</a>
             </div>
           </div>
-          <a href="{{ url_for('main.payments_page') }}">Paiements</a>
+          {% if can_access('admin', 'staff', 'manager') %}<a href="{{ url_for('main.payments_page') }}">Paiements</a>{% endif %}
           {% elif current_user.is_authenticated and can_access('parent') %}
           <a href="{{ url_for('main.payments_page') }}">Paiements</a>
+          {% endif %}
           {% endif %}
         </nav>
         <div class="topbar-right">
@@ -92,6 +104,8 @@
 
     <footer class="footer page-shell">EduManager : pilotage scolaire, financier et RH sur une seule interface.</footer>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/fr.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   </body>
 </html>

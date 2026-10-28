@@ -1,17 +1,17 @@
-{% extends "base.html" %} {% block title %}Familles | EduManager{% endblock %} {% block content %}
+{% extends "base.html" %} {% set parent_view = can_access('parent') and not can_access('admin', 'staff', 'manager') %} {% block title %}{% if parent_view %}Mon espace famille{% else %}Familles{% endif %} | EduManager{% endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>Familles</h1>
+    <h1>{% if parent_view %}Mon espace famille{% else %}Familles{% endif %}</h1>
     {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-primary" href="{{ url_for('main.students_page') }}">Ajouter un élève</a>{% endif %}
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>{% endif %}
   </div>
 </section>
 
 <section class="panel section-block">
   <div class="section-head section-head-search">
-    <h2>Liste des familles</h2>
+    <h2>{% if parent_view %}Accès à mon dossier famille{% else %}Liste des familles{% endif %}</h2>
     <form method="get" class="search-form" role="search">
-      <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher une famille..." />
+      <input type="search" name="q" value="{{ search_query }}" placeholder="{% if parent_view %}Rechercher dans mes accès famille...{% else %}Rechercher une famille...{% endif %}" />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
       <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Réinitialiser</a>
@@ -61,7 +61,7 @@
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="9" class="empty-row">Aucune famille enregistrée.</td></tr>
+        <tr><td colspan="9" class="empty-row">{% if parent_view %}Aucun dossier famille n'est rattaché à votre compte.{% else %}Aucune famille enregistrée.{% endif %}</td></tr>
         {% endfor %}
       </tbody>
     </table>

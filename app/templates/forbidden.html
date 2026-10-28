@@ -6,7 +6,7 @@
   <h1>Acces refuse</h1>
   <p>Votre role ne permet pas d'ouvrir cette page.</p>
   <div class="hero-cta">
-    <a class="btn btn-primary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    <a class="btn btn-primary" href="{{ home_url() }}">{{ home_label() }}</a>
   </div>
 </section>
 {% endblock %}

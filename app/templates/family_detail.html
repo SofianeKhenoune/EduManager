@@ -5,7 +5,11 @@
   <div class="section-head">
     <h1>{{ family.display_name }}</h1>
     <div style="display:flex;gap:.5rem;">
+      {% if can_access('parent') and not can_access('admin', 'staff', 'manager') %}
+      <a class="btn btn-secondary" href="{{ url_for('main.payments_page') }}">Mes paiements</a>
+      {% else %}
       <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Retour</a>
+      {% endif %}
       {% if can_access('admin', 'staff', 'manager') %}<form method="post" action="{{ url_for('main.delete_family', family_id=family.id) }}" class="inline-form" onsubmit="return confirm('Confirmer la suppression de cette famille ? Action possible uniquement s\'il n\'y a plus d\'élève actif.')">
         <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
       </form>{% endif %}

@@ -66,6 +66,35 @@ def create_app() -> Flask:
         def can_access(*roles):
             return current_user.is_authenticated and hasattr(current_user, "has_role") and current_user.has_role(*roles)
 
+        def home_endpoint() -> str:
+            if not current_user.is_authenticated:
+                return "main.login"
+            if current_user.has_role("parent"):
+                return "main.families_page"
+            if current_user.has_role("teacher"):
+                return "main.teacher_my_classes"
+            if current_user.has_role("volunteer"):
+                return "main.planning_page"
+            if current_user.has_role("student"):
+                return "main.student_home"
+            return "main.index"
+
+        def home_url() -> str:
+            return url_for(home_endpoint())
+
+        def home_label() -> str:
+            if not current_user.is_authenticated:
+                return "Connexion"
+            if current_user.has_role("parent"):
+                return "Retour a mon espace famille"
+            if current_user.has_role("teacher"):
+                return "Retour a mon espace enseignant"
+            if current_user.has_role("volunteer"):
+                return "Retour a mon espace benevolat"
+            if current_user.has_role("student"):
+                return "Retour a mon espace etudiant"
+            return "Retour au tableau de bord"
+
         def pagination_url(endpoint: str, page: int):
             args = request.args.to_dict(flat=True)
             args["page"] = page
@@ -73,6 +102,9 @@ def create_app() -> Flask:
 
         return {
             "can_access": can_access,
+            "home_endpoint": home_endpoint,
+            "home_url": home_url,
+            "home_label": home_label,
             "pagination_url": pagination_url,
         }
 

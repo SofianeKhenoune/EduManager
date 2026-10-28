@@ -98,6 +98,47 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   };
 
+  const initFrenchDatePickers = (scope = document) => {
+    if (typeof flatpickr === 'undefined') {
+      return;
+    }
+
+    const fields = scope.querySelectorAll(
+      'input.fr-date-input, input[type="date"], input.calendar-fr',
+    );
+
+    fields.forEach((field) => {
+      if (field.dataset.flatpickrReady === '1') {
+        return;
+      }
+
+      const fieldType = (field.getAttribute('type') || '').toLowerCase();
+      if (fieldType === 'date') {
+        field.setAttribute('type', 'text');
+      }
+
+      if (!field.placeholder) {
+        field.placeholder = 'JJ-MM-AAAA';
+      }
+      if (!field.getAttribute('pattern')) {
+        field.setAttribute('pattern', '^\\d{2}[-/]\\d{2}[-/]\\d{4}$');
+      }
+
+      flatpickr(field, {
+        locale:
+          typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.fr
+            ? flatpickr.l10ns.fr
+            : 'fr',
+        dateFormat: 'd-m-Y',
+        allowInput: true,
+        clickOpens: true,
+        disableMobile: true,
+      });
+
+      field.dataset.flatpickrReady = '1';
+    });
+  };
+
   const formatBirthDateInput = (rawValue) => {
     const digits = (rawValue || '').replace(/\D/g, '').slice(0, 8);
     if (digits.length <= 2) {
@@ -113,6 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document
       .querySelectorAll('input.fr-date-input, input[name="birth_date"]')
       .forEach((field) => {
+        if (field.dataset.flatpickrReady === '1') {
+          return;
+        }
+        if ((field.getAttribute('type') || '').toLowerCase() === 'date') {
+          return;
+        }
         if (field.dataset.birthDateMaskReady === '1') {
           return;
         }
@@ -135,7 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   initAutoToggleForms();
+  initFrenchDatePickers();
   initBirthDateMask();
+
+  // Native date pickers use browser locale; enforce French hints consistently.
+  document.querySelectorAll('input[type="date"]').forEach((field) => {
+    if (!field.getAttribute('lang')) {
+      field.setAttribute('lang', 'fr-FR');
+    }
+  });
 
   // Initialize time slot handlers for courses
   const TIME_SLOTS = {
@@ -459,17 +514,134 @@ document.addEventListener('DOMContentLoaded', () => {
   // Suggested amount auto-fill on payments form
   const paymentFamilySelect = document.getElementById('payment-family-select');
   const paymentTotalAmount = document.getElementById('payment-total-amount');
+  const paymentCreationMode = document.getElementById('payment-creation-mode');
+  const paymentMethodSelect = document.getElementById('payment-method-select');
+  const customMethodWrapper = document.getElementById('custom-method-wrapper');
+  const customMethodInput = document.getElementById('custom-method-input');
+  const familyRemainingDisplay = document.getElementById(
+    'family-remaining-display',
+  );
+  const paymentCreationAlert = document.getElementById(
+    'payment-creation-alert',
+  );
+  const paymentCreateForm = document.getElementById('payment-create-form');
+  const paymentCreateSubmit = document.getElementById('payment-create-submit');
+
+  if (paymentMethodSelect && customMethodWrapper && customMethodInput) {
+    const toggleCustomMethod = () => {
+      const isCustom = paymentMethodSelect.value === 'MANUAL';
+      customMethodWrapper.style.display = isCustom ? '' : 'none';
+      customMethodInput.required = isCustom;
+      if (!isCustom) {
+        customMethodInput.value = '';
+      }
+    };
+    paymentMethodSelect.addEventListener('change', toggleCustomMethod);
+    toggleCustomMethod();
+  }
+
   if (paymentFamilySelect && paymentTotalAmount) {
+    let lastRemaining = Number.NaN;
+    let lastActiveChildren = Number.NaN;
+
+    const setCreationAlert = (message = '', level = 'warning') => {
+      if (!paymentCreationAlert) {
+        return;
+      }
+      if (!message) {
+        paymentCreationAlert.style.display = 'none';
+        paymentCreationAlert.textContent = '';
+        paymentCreationAlert.classList.remove('flash-warning', 'flash-info');
+        paymentCreationAlert.classList.add('flash-warning');
+        return;
+      }
+      paymentCreationAlert.textContent = message;
+      paymentCreationAlert.style.display = '';
+      paymentCreationAlert.classList.remove('flash-warning', 'flash-info');
+      paymentCreationAlert.classList.add(
+        level === 'info' ? 'flash-info' : 'flash-warning',
+      );
+    };
+
+    const updateCreationGuard = () => {
+      const selectedMode = paymentCreationMode
+        ? paymentCreationMode.value
+        : 'manual';
+      const selectedFamily = paymentFamilySelect.value;
+      const isAuto = selectedMode === 'auto';
+      let disableSubmit = false;
+
+      if (
+        selectedFamily &&
+        Number.isFinite(lastActiveChildren) &&
+        lastActiveChildren <= 0
+      ) {
+        setCreationAlert(
+          "Création bloquée : cette famille n'a aucun enfant inscrit actif.",
+        );
+        disableSubmit = true;
+      } else if (isAuto && !selectedFamily) {
+        setCreationAlert(
+          'Sélectionnez une famille pour utiliser le mode Automatique (solde restant).',
+        );
+        disableSubmit = true;
+      } else if (
+        isAuto &&
+        Number.isFinite(lastRemaining) &&
+        lastRemaining <= 0
+      ) {
+        setCreationAlert(
+          'Cette famille est déjà soldée : aucun paiement automatique ne peut être créé. Passez en mode Manuel si nécessaire.',
+        );
+        disableSubmit = true;
+      } else if (isAuto && Number.isFinite(lastRemaining)) {
+        setCreationAlert(
+          `Mode automatique actif : le montant sera aligné sur le solde restant (${lastRemaining.toFixed(2)} €).`,
+          'info',
+        );
+      } else {
+        setCreationAlert('');
+      }
+
+      if (paymentCreateSubmit) {
+        paymentCreateSubmit.disabled = disableSubmit;
+      }
+    };
+
     const applySuggestedAmount = (force = false) => {
       const option = paymentFamilySelect.selectedOptions[0];
       if (!option) {
+        lastRemaining = Number.NaN;
+        updateCreationGuard();
         return;
       }
 
       const suggested = Number.parseFloat(option.dataset.suggested || '');
+      const remaining = Number.parseFloat(option.dataset.remaining || '');
+      const activeChildren = Number.parseInt(
+        option.dataset.activeChildren || '',
+        10,
+      );
+      lastRemaining = remaining;
+      lastActiveChildren = activeChildren;
       if (!Number.isFinite(suggested)) {
+        updateCreationGuard();
         return;
       }
+
+      if (familyRemainingDisplay) {
+        familyRemainingDisplay.textContent = Number.isFinite(remaining)
+          ? `${remaining.toFixed(2)} €`
+          : '—';
+      }
+
+      const selectedMode = paymentCreationMode
+        ? paymentCreationMode.value
+        : 'manual';
+      const targetAmount =
+        selectedMode === 'auto' && Number.isFinite(remaining)
+          ? Math.max(remaining, 0)
+          : suggested;
 
       const shouldFill =
         force ||
@@ -477,20 +649,88 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentTotalAmount.dataset.autofilled === '1';
 
       if (shouldFill) {
-        paymentTotalAmount.value = suggested.toFixed(2);
+        paymentTotalAmount.value = targetAmount.toFixed(2);
         paymentTotalAmount.dataset.autofilled = '1';
       }
+
+      updateCreationGuard();
     };
 
     paymentFamilySelect.addEventListener('change', () =>
       applySuggestedAmount(true),
     );
+    if (paymentCreationMode) {
+      paymentCreationMode.addEventListener('change', () =>
+        applySuggestedAmount(true),
+      );
+    }
     paymentTotalAmount.addEventListener('input', () => {
       paymentTotalAmount.dataset.autofilled = '0';
     });
 
+    if (paymentCreateForm) {
+      paymentCreateForm.addEventListener('submit', (event) => {
+        const selectedMode = paymentCreationMode
+          ? paymentCreationMode.value
+          : 'manual';
+        if (Number.isFinite(lastActiveChildren) && lastActiveChildren <= 0) {
+          event.preventDefault();
+          setCreationAlert(
+            "Création bloquée : cette famille n'a aucun enfant inscrit actif.",
+          );
+          window.alert(
+            "Impossible de créer un paiement : la famille n'a aucun enfant inscrit actif.",
+          );
+          return;
+        }
+
+        if (
+          selectedMode === 'auto' &&
+          Number.isFinite(lastRemaining) &&
+          lastRemaining <= 0
+        ) {
+          event.preventDefault();
+          setCreationAlert(
+            'Création bloquée : le solde restant est déjà à 0. Utilisez le mode Manuel si vous devez enregistrer un paiement exceptionnel.',
+          );
+          window.alert(
+            'Cette famille est déjà soldée. Le mode "Solde restant" ne peut pas créer de paiement.',
+          );
+        }
+      });
+    }
+
     applySuggestedAmount(false);
   }
+
+  // Re-apply date picker and mask on dynamically injected date inputs.
+  const observer = new MutationObserver((mutations) => {
+    let shouldRefresh = false;
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (!(node instanceof HTMLElement)) {
+          return;
+        }
+        if (
+          node.matches(
+            'input.fr-date-input, input[type="date"], input.calendar-fr',
+          ) ||
+          node.querySelector(
+            'input.fr-date-input, input[type="date"], input.calendar-fr',
+          )
+        ) {
+          shouldRefresh = true;
+        }
+      });
+    });
+
+    if (shouldRefresh) {
+      initFrenchDatePickers();
+      initBirthDateMask();
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
 
   const chip = document.querySelector('[data-health-chip]');
 

@@ -1,14 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Mes classes | EduManager{% endblock %}
+{% set is_teacher_view = can_access('teacher') %}
+{% block title %}{% if is_teacher_view %}Mes classes{% else %}Classes{% endif %} | EduManager{% endblock %}
 {% block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>Mes classes</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Tableau de bord</a>
+    <h1>{% if is_teacher_view %}Mes classes{% else %}Classes{% endif %}</h1>
+    <a class="btn btn-secondary" href="{{ home_url() }}">{{ home_label() }}</a>
   </div>
 
   {% if not courses %}
-  <p class="empty-row">Aucun cours ne vous est assigné pour le moment.</p>
+  <p class="empty-row">{% if is_teacher_view %}Aucun cours ne vous est assigné pour le moment.{% else %}Aucun cours disponible pour le moment.{% endif %}</p>
   {% else %}
   <div class="cards-grid">
     {% for course in courses %}

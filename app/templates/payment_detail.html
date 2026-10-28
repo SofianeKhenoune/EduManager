@@ -1,4 +1,5 @@
 {% extends "base.html" %} {% block title %}Paiement – {{ payment.family.display_name if payment.family else 'Detail' }} | EduManager{% endblock %} {% block content %}
+{% set can_record_payment = (not payment.family) or (payment.family.active_children_count > 0) %}
 
 <section class="panel section-block">
   <div class="section-head">
@@ -49,7 +50,15 @@
   {% endif %}
 </section>
 
-{% if can_access('admin', 'staff', 'manager') and payment.remaining_amount > 0 %}
+{% if can_access('admin', 'staff', 'manager') and not can_record_payment %}
+<section class="panel section-block">
+  <article class="flash-item flash-warning">
+    Enregistrement bloqué : cette famille n'a aucun enfant inscrit actif.
+  </article>
+</section>
+{% endif %}
+
+{% if can_access('admin', 'staff', 'manager') and payment.remaining_amount > 0 and can_record_payment %}
 <section class="panel section-block">
   <h2>Ajouter une échéance</h2>
   <form method="post" action="{{ url_for('main.add_installment', payment_id=payment.id) }}" class="form-grid">
@@ -108,7 +117,7 @@
           <td>{% if inst.method == 'CB' %}Carte bancaire{% elif inst.method == 'ESP' %}Espèces{% elif inst.method == 'CHQ' %}Chèque{% else %}Prévision{% endif %}</td>
           {% if can_access('admin', 'staff', 'manager') %}
           <td class="td-actions">
-            {% if not past_locked %}
+            {% if not past_locked and can_record_payment %}
             <form method="post" action="{{ url_for('main.edit_installment', payment_id=payment.id, installment_id=inst.id) }}" class="form-inline-row">
               <input type="number" name="amount" min="0" step="0.01" value="{{ '%.2f'|format(inst.amount) }}" required />
               <input type="text" name="payment_date" class="fr-date-input" value="{{ inst.payment_date.strftime('%d-%m-%Y') if inst.payment_date else '' }}" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" />
@@ -125,6 +134,8 @@
               <button class="btn btn-danger btn-sm" type="submit">Supprimer</button>
             </form>
             {% endif %}
+            {% elif not can_record_payment %}
+            <span class="text-muted">Enregistrement bloqué</span>
             {% else %}
             <span class="text-muted">Échéance passée verrouillée</span>
             {% endif %}

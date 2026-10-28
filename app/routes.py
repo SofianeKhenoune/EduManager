@@ -53,8 +53,10 @@ except ImportError:
 
 main_bp = Blueprint("main", __name__)
 
-ADMIN_ROLES = ("admin", "staff", "manager")
-PEDAGOGY_ROLES = ("admin", "staff", "manager", "teacher", "volunteer")
+ADMIN_ROLES = ("admin", "manager")
+STAFF_ROLES = ("staff",)
+OFFICE_ROLES = ADMIN_ROLES + STAFF_ROLES
+PEDAGOGY_ROLES = OFFICE_ROLES + ("teacher", "volunteer")
 PARENT_ROLES = ("parent",)
 WEEKDAY_ORDER = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 PER_PAGE = 12
@@ -130,6 +132,15 @@ def _ensure_family_payment_target(family: Family):
     return latest_payment, ("updated" if changed else "unchanged")
 
 
+def _family_remaining_amount(family: Family) -> float:
+    total_due = 0.0
+    total_paid = 0.0
+    for payment in family.payments:
+        total_due += float(payment.total_amount or 0)
+        total_paid += float(payment.installments_total or 0)
+    return round(max(total_due - total_paid, 0.0), 2)
+
+
 def _next_due_date(base: date, month_offset: int) -> date:
     year = base.year
     month = base.month
@@ -187,15 +198,29 @@ def _create_user(first_name: str, last_name: str, email: str, password: str, rol
 
 
 def _family_access_allowed(family: Family):
-    if current_user.has_role(*ADMIN_ROLES):
+    if current_user.has_role(*OFFICE_ROLES):
         return True
     return current_user.has_role(*PARENT_ROLES) and family.user_id == current_user.id
 
 
 def _student_access_allowed(student: Student):
-    if current_user.has_role(*ADMIN_ROLES, "teacher"):
+    if current_user.has_role(*OFFICE_ROLES, "teacher"):
         return True
     return current_user.has_role(*PARENT_ROLES) and student.family and student.family.user_id == current_user.id
+
+
+def _default_home_endpoint_for(user: User) -> str:
+    if user.has_role(*OFFICE_ROLES):
+        return "main.index"
+    if user.has_role("parent"):
+        return "main.families_page"
+    if user.has_role("teacher"):
+        return "main.teacher_my_classes"
+    if user.has_role("volunteer"):
+        return "main.planning_page"
+    if user.has_role("student"):
+        return "main.student_home"
+    return "main.login"
 
 
 def _render_pdf(filename: str, draw_callback):
@@ -327,10 +352,10 @@ def forbidden(_error):
 
 
 @main_bp.route("/")
-@roles_required(*ADMIN_ROLES)
+@login_required
 def index():
-    if not current_user.is_authenticated:
-        return render_template("index.html")
+    if not current_user.has_role(*OFFICE_ROLES):
+        return redirect(url_for(_default_home_endpoint_for(current_user)))
     
     # Basic KPIs
     kpis = {
@@ -416,7 +441,7 @@ def index():
 @main_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for(_default_home_endpoint_for(current_user)))
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -425,7 +450,7 @@ def login():
             session.permanent = True
             login_user(user, remember=request.form.get("remember") == "1")
             next_page = request.args.get("next")
-            return redirect(next_page or url_for("main.index"))
+            return redirect(next_page or url_for(_default_home_endpoint_for(user)))
         flash("Email ou mot de passe incorrect.", "danger")
     return render_template("login.html")
 
@@ -601,7 +626,7 @@ def api_kpis():
 
 @main_bp.route("/students", methods=["GET", "POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def students_page():
     query = request.args.get("q", "").strip()
 
@@ -759,7 +784,7 @@ def students_page():
 
 @main_bp.route("/students/<int:student_id>/edit", methods=["GET", "POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def edit_student(student_id):
     student = Student.query.get_or_404(student_id)
     if request.method == "POST":
@@ -788,7 +813,7 @@ def edit_student(student_id):
 
 @main_bp.route("/students/<int:student_id>/delete", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def delete_student(student_id):
     student = Student.query.get_or_404(student_id)
     family = student.family
@@ -1674,7 +1699,7 @@ def delete_assessment(assessment_id):
 
 @main_bp.route("/enrollments", methods=["GET", "POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def enrollments_page():
     selected_student_id = _optional_int(request.args.get("student_id"))
     quick_flow = request.args.get("quick_flow") == "1"
@@ -1757,7 +1782,7 @@ def enrollments_page():
 
 @main_bp.route("/enrollments/<int:enrollment_id>/edit", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def edit_enrollment(enrollment_id):
     enrollment = Enrollment.query.get_or_404(enrollment_id)
     new_status = request.form.get("status", "").strip()
@@ -1772,7 +1797,7 @@ def edit_enrollment(enrollment_id):
 
 @main_bp.route("/enrollments/<int:enrollment_id>/delete", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def delete_enrollment(enrollment_id):
     enrollment = Enrollment.query.get_or_404(enrollment_id)
     db.session.delete(enrollment)
@@ -1784,10 +1809,10 @@ def delete_enrollment(enrollment_id):
 @main_bp.route("/families", methods=["GET", "POST"])
 @login_required
 def families_page():
-    if not current_user.has_role(*ADMIN_ROLES, *PARENT_ROLES):
+    if not current_user.has_role(*OFFICE_ROLES, *PARENT_ROLES):
         abort(403)
     if request.method == "POST":
-        if not current_user.has_role(*ADMIN_ROLES):
+        if not current_user.has_role(*OFFICE_ROLES):
             abort(403)
         family = Family(
             school_year=request.form.get("school_year", "2025-2026").strip() or "2025-2026",
@@ -1814,6 +1839,10 @@ def families_page():
     query = Family.query
     if current_user.has_role(*PARENT_ROLES):
         query = query.filter(Family.user_id == current_user.id)
+        if not search:
+            parent_families = query.order_by(Family.father_last_name.asc()).all()
+            if len(parent_families) == 1:
+                return redirect(url_for("main.family_detail", family_id=parent_families[0].id))
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -1840,7 +1869,7 @@ def family_detail(family_id):
     if not _family_access_allowed(family):
         abort(403)
     suggest_delete = request.args.get("suggest_delete") == "1"
-    students_without_family = Student.query.filter_by(family_id=None).order_by(Student.last_name.asc()).all() if current_user.has_role(*ADMIN_ROLES) else []
+    students_without_family = Student.query.filter_by(family_id=None).order_by(Student.last_name.asc()).all() if current_user.has_role(*OFFICE_ROLES) else []
     sites = Site.query.order_by(Site.name.asc()).all()
     suggested = family.suggested_amount()
     assessments = StudentAssessment.query.join(Student).filter(Student.family_id == family.id).order_by(StudentAssessment.assessment_date.desc()).limit(8).all()
@@ -1860,7 +1889,7 @@ def family_detail(family_id):
 
 @main_bp.route("/families/<int:family_id>/edit", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def edit_family(family_id):
     family = Family.query.get_or_404(family_id)
     family.school_year = request.form.get("school_year", "2025-2026").strip() or "2025-2026"
@@ -1884,7 +1913,7 @@ def edit_family(family_id):
 
 @main_bp.route("/families/<int:family_id>/students/add", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def family_add_student(family_id):
     family = Family.query.get_or_404(family_id)
     student_id = _optional_int(request.form.get("student_id"))
@@ -1902,7 +1931,7 @@ def family_add_student(family_id):
 
 @main_bp.route("/families/<int:family_id>/students/new", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def family_new_student(family_id):
     family = Family.query.get_or_404(family_id)
     try:
@@ -1944,7 +1973,7 @@ def family_new_student(family_id):
 
 @main_bp.route("/families/<int:family_id>/students/<int:student_id>/remove", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def family_remove_student(family_id, student_id):
     student = Student.query.get_or_404(student_id)
     family = Family.query.get_or_404(family_id)
@@ -1984,7 +2013,7 @@ def delete_family(family_id):
 
 @main_bp.route("/families/<int:family_id>/set-parent", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def family_set_parent(family_id):
     family = Family.query.get_or_404(family_id)
     action = request.form.get("action", "create")
@@ -2037,31 +2066,66 @@ def family_set_parent(family_id):
 @main_bp.route("/payments", methods=["GET", "POST"])
 @login_required
 def payments_page():
-    if not current_user.has_role(*ADMIN_ROLES, *PARENT_ROLES):
+    if not current_user.has_role(*OFFICE_ROLES, *PARENT_ROLES):
         abort(403)
 
     selected_family_id = _optional_int(request.args.get("family_id"))
     quick_flow = request.args.get("quick_flow") == "1"
 
     if request.method == "POST":
-        if not current_user.has_role(*ADMIN_ROLES):
+        if not current_user.has_role(*OFFICE_ROLES):
             abort(403)
         family_id = _optional_int(request.form.get("family_id"))
+        creation_mode = request.form.get("creation_mode", "manual").strip().lower() or "manual"
         total_amount = _optional_float(request.form.get("total_amount"))
         payment_date_raw = request.form.get("payment_date", "").strip()
         payment_date = _parse_date(payment_date_raw) if payment_date_raw else None
-        method = request.form.get("method", "").strip() or None
+        method_raw = request.form.get("method", "").strip()
+        method = method_raw if method_raw in ("CB", "ESP", "CHQ") else None
+        custom_method = request.form.get("custom_method", "").strip() or None
         installments_count = _optional_int(request.form.get("installments_count"))
         quick_flow = request.form.get("quick_flow") == "1"
 
+        if creation_mode not in ("auto", "manual"):
+            creation_mode = "manual"
+
+        family = Family.query.get(family_id) if family_id else None
+
         if family_id and total_amount is None:
-            family = Family.query.get(family_id)
             if family:
                 total_amount = float(family.suggested_amount())
 
         if not family_id or total_amount is None:
             flash("Famille et montant sont obligatoires.", "warning")
             return redirect(url_for("main.payments_page", family_id=family_id, quick_flow=1 if quick_flow else None))
+
+        if family is None:
+            flash("Famille introuvable.", "warning")
+            return redirect(url_for("main.payments_page", family_id=family_id, quick_flow=1 if quick_flow else None))
+
+        if family.active_children_count <= 0:
+            flash("Impossible de créer un paiement : cette famille n'a aucun enfant inscrit actif.", "warning")
+            return redirect(url_for("main.payments_page", family_id=family_id, quick_flow=1 if quick_flow else None))
+
+        if creation_mode == "auto":
+            remaining_amount = _family_remaining_amount(family)
+            if remaining_amount <= 0:
+                flash("Cette famille est déjà soldée. Utilisez le mode Manuel pour un encaissement exceptionnel.", "warning")
+                return redirect(url_for("main.payments_page", family_id=family_id, quick_flow=1 if quick_flow else None))
+            # Auto mode aligns the payment target with current outstanding balance.
+            total_amount = remaining_amount
+
+        if method is None and custom_method is None:
+            flash("Sélectionnez un mode de paiement ou renseignez un mode personnalisé.", "warning")
+            return redirect(url_for("main.payments_page", family_id=family_id, quick_flow=1 if quick_flow else None))
+
+        method_label = {
+            "CB": "Carte bancaire",
+            "ESP": "Espèces",
+            "CHQ": "Chèque",
+        }.get(method)
+        if custom_method:
+            method_label = custom_method
 
         payment = Payment(family_id=family_id, total_amount=total_amount, payment_date=payment_date, method=method)
         db.session.add(payment)
@@ -2081,7 +2145,7 @@ def payments_page():
                         installment_number=idx,
                         amount=round(cents / 100, 2),
                         payment_date=due_date,
-                        method=None,
+                        method=method if idx == 1 else None,
                     )
                 )
                 previous_due = due_date
@@ -2092,7 +2156,10 @@ def payments_page():
             flash("Paiement créé. Parcours d'inscription terminé.", "success")
             return redirect(url_for("main.family_detail", family_id=family_id))
 
-        flash("Paiement créé.", "success")
+        if method_label:
+            flash(f"Paiement créé (mode: {method_label}).", "success")
+        else:
+            flash("Paiement créé.", "success")
         return redirect(url_for("main.payment_detail", payment_id=payment.id))
 
     search = request.args.get("q", "").strip()
@@ -2111,19 +2178,25 @@ def payments_page():
             )
         )
     payments_pagination = _paginate(query.order_by(Payment.payment_date.desc()))
-    families = Family.query.order_by(Family.father_last_name.asc()).all() if current_user.has_role(*ADMIN_ROLES) else []
+    families = Family.query.order_by(Family.father_last_name.asc()).all() if current_user.has_role(*OFFICE_ROLES) else []
+    family_remaining_by_id = {family.id: _family_remaining_amount(family) for family in families}
     default_total_amount = None
     if selected_family_id:
         selected_family = next((family for family in families if family.id == selected_family_id), None)
         if selected_family:
             default_total_amount = float(selected_family.suggested_amount())
+    selected_family_remaining = None
+    if selected_family_id:
+        selected_family_remaining = family_remaining_by_id.get(selected_family_id)
 
     return render_template(
         "payments.html",
         payments=payments_pagination.items,
         payments_pagination=payments_pagination,
         families=families,
+        family_remaining_by_id=family_remaining_by_id,
         default_total_amount=default_total_amount,
+        selected_family_remaining=selected_family_remaining,
         search_query=search,
         selected_family_id=selected_family_id,
         quick_flow=quick_flow,
@@ -2154,11 +2227,16 @@ def payment_detail(payment_id):
 
 @main_bp.route("/payment-setup/<int:payment_id>", methods=["GET", "POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def payment_quick_setup(payment_id):
     payment = Payment.query.get_or_404(payment_id)
 
     if request.method == "POST":
+        family = payment.family
+        if family is not None and family.active_children_count <= 0:
+            flash("Impossible d'enregistrer ce paiement : cette famille n'a aucun enfant inscrit actif.", "warning")
+            return redirect(url_for("main.payment_detail", payment_id=payment_id))
+
         total_amount = _optional_float(request.form.get("total_amount"))
         payment_date_raw = request.form.get("payment_date", "").strip()
         payment_date = _parse_date(payment_date_raw) if payment_date_raw else date.today()
@@ -2213,9 +2291,14 @@ def payment_quick_setup(payment_id):
 
 @main_bp.route("/payments/<int:payment_id>/installments", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def add_installment(payment_id):
     payment = Payment.query.get_or_404(payment_id)
+    family = payment.family
+    if family is not None and family.active_children_count <= 0:
+        flash("Impossible d'enregistrer ce paiement : cette famille n'a aucun enfant inscrit actif.", "warning")
+        return redirect(url_for("main.payment_detail", payment_id=payment_id))
+
     installment_number = _optional_int(request.form.get("installment_number"))
     amount = _optional_float(request.form.get("amount"))
     method = request.form.get("method", "").strip() or None
@@ -2248,9 +2331,14 @@ def add_installment(payment_id):
 
 @main_bp.route("/payments/<int:payment_id>/installments/<int:installment_id>/edit", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def edit_installment(payment_id, installment_id):
     payment = Payment.query.get_or_404(payment_id)
+    family = payment.family
+    if family is not None and family.active_children_count <= 0:
+        flash("Impossible d'enregistrer ce paiement : cette famille n'a aucun enfant inscrit actif.", "warning")
+        return redirect(url_for("main.payment_detail", payment_id=payment_id))
+
     installment = PaymentInstallment.query.filter_by(id=installment_id, payment_id=payment_id).first_or_404()
 
     is_past_installment = installment.payment_date is not None and installment.payment_date < date.today()
@@ -2311,7 +2399,7 @@ def edit_installment(payment_id, installment_id):
 
 @main_bp.route("/payments/<int:payment_id>/installments/<int:installment_id>/delete", methods=["POST"])
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def delete_installment(payment_id, installment_id):
     installment = PaymentInstallment.query.filter_by(id=installment_id, payment_id=payment_id).first_or_404()
     is_past_installment = installment.payment_date is not None and installment.payment_date < date.today()
@@ -2357,10 +2445,13 @@ def delete_payment(payment_id):
 
 @main_bp.route("/exports/<string:dataset>.csv")
 @login_required
-@roles_required(*ADMIN_ROLES)
+@roles_required(*OFFICE_ROLES)
 def export_csv(dataset):
     output = io.StringIO()
     writer = csv.writer(output)
+
+    if dataset == "employees" and not current_user.has_role(*ADMIN_ROLES):
+        abort(403)
 
     if dataset == "students":
         writer.writerow(["Nom", "Prénom", "Famille", "Site", "Naissance", "Reinscription"])
@@ -2786,6 +2877,13 @@ def teacher_delete_assessment(course_id, assessment_id):
     db.session.commit()
     flash("Évaluation supprimée.", "success")
     return redirect(url_for("main.teacher_course_detail", course_id=course_id))
+
+
+@main_bp.route("/student/home")
+@login_required
+@roles_required("student")
+def student_home():
+    return render_template("student_home.html")
 
 
 @main_bp.route("/admin/bootstrap", methods=["POST"])

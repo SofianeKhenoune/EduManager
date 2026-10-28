@@ -1,8 +1,12 @@
-{% extends "base.html" %} {% block title %}Paiements | EduManager{% endblock %} {% block content %}
+{% extends "base.html" %} {% set parent_view = can_access('parent') and not can_access('admin', 'staff', 'manager') %} {% block title %}{% if parent_view %}Mes paiements{% else %}Paiements{% endif %} | EduManager{% endblock %} {% block content %}
 <section class="panel section-block">
   <div class="section-head">
-    <h1>Paiements</h1>
+    <h1>{% if parent_view %}Mes paiements{% else %}Paiements{% endif %}</h1>
+    {% if parent_view %}
+    <a class="btn btn-secondary" href="{{ url_for('main.families_page') }}">Retour à ma famille</a>
+    {% else %}
     <a class="btn btn-secondary" href="{{ url_for('main.index') }}">Retour au tableau de bord</a>
+    {% endif %}
   </div>
 
   {% if quick_flow and selected_family_id %}
@@ -10,19 +14,29 @@
   {% endif %}
 
   {% if can_access('admin', 'staff', 'manager') %}
-  <form method="post" class="form-grid">
+  {% set auto_mode_selected = selected_family_remaining is not none and selected_family_remaining > 0 %}
+  {% set manual_mode_selected = not auto_mode_selected %}
+  <form method="post" class="form-grid" id="payment-create-form">
     {% if quick_flow %}
     <input type="hidden" name="quick_flow" value="1" />
     {% endif %}
+    <label>
+      Type de création
+      <select name="creation_mode" id="payment-creation-mode">
+        <option value="auto" {{ 'selected' if auto_mode_selected else '' }}>Automatique (solde restant)</option>
+        <option value="manual" {{ 'selected' if manual_mode_selected else '' }}>Manuel</option>
+      </select>
+      <small class="text-muted">Automatique utilise le reste à payer. Manuel permet un montant personnalisé.</small>
+    </label>
     <label>
       Famille *
       <select name="family_id" id="payment-family-select" required>
         <option value="">— Sélectionner —</option>
         {% for f in families %}
         {% if selected_family_id == f.id %}
-        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}" selected>{{ f.display_name }}</option>
+        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}" data-remaining="{{ family_remaining_by_id.get(f.id, 0) }}" data-active-children="{{ f.active_children_count }}" selected>{{ f.display_name }}</option>
         {% else %}
-        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}">{{ f.display_name }}</option>
+        <option value="{{ f.id }}" data-suggested="{{ f.suggested_amount() }}" data-remaining="{{ family_remaining_by_id.get(f.id, 0) }}" data-active-children="{{ f.active_children_count }}">{{ f.display_name }}</option>
         {% endif %}
         {% endfor %}
       </select>
@@ -30,27 +44,34 @@
     <label>
       Montant total (€) *
       <input type="number" id="payment-total-amount" name="total_amount" min="0" step="0.01" value="{{ '%.2f'|format(default_total_amount) if default_total_amount is not none else '' }}" required />
+      <small class="text-muted">Reste actuel : <span id="family-remaining-display">{% if selected_family_remaining is not none %}{{ '%.2f'|format(selected_family_remaining) }} €{% else %}—{% endif %}</span></small>
     </label>
     <label>
       Date
-      <input type="text" name="payment_date" class="fr-date-input" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" />
+      <input type="text" name="payment_date" id="payment-date-fr" class="fr-date-input calendar-fr" placeholder="JJ-MM-AAAA" pattern="^\d{2}[-/]\d{2}[-/]\d{4}$" autocomplete="off" />
     </label>
     <label>
       Moyen de paiement
-      <select name="method">
+      <select name="method" id="payment-method-select">
         <option value="">— Non précisé —</option>
         <option value="CB">Carte bancaire</option>
         <option value="ESP">Espèces</option>
         <option value="CHQ">Chèque</option>
+        <option value="MANUAL">Manuel / autre</option>
       </select>
+    </label>
+    <label id="custom-method-wrapper" style="display:none;">
+      Mode personnalisé
+      <input type="text" name="custom_method" id="custom-method-input" placeholder="Ex: Virement, Donation, Manuel" autocomplete="off" />
     </label>
     <label>
       Nombre d'échéances (mensuelles)
       <input type="number" name="installments_count" min="1" max="12" value="1" />
       <small class="text-muted">Echéances générées au 10 de chaque mois à partir du mois suivant (août exclu).</small>
     </label>
+    <div id="payment-creation-alert" class="flash-item flash-warning" style="display:none; grid-column: 1 / -1;" role="alert" aria-live="polite"></div>
     <div class="form-actions">
-      <button class="btn btn-primary" type="submit">Créer un paiement</button>
+      <button class="btn btn-primary" type="submit" id="payment-create-submit">Créer un paiement</button>
     </div>
   </form>
   {% else %}
@@ -60,13 +81,13 @@
 
 <section class="panel section-block">
   <div class="section-head section-head-search">
-    <h2>Liste des paiements</h2>
+    <h2>{% if parent_view %}Historique des paiements{% else %}Liste des paiements{% endif %}</h2>
     <div class="section-actions-row">
       {% if can_access('admin', 'staff', 'manager') %}<a class="btn btn-secondary" href="{{ url_for('main.export_csv', dataset='payments') }}">Exporter CSV</a>{% endif %}
     <form method="get" class="search-form" role="search">
       {% if selected_family_id %}<input type="hidden" name="family_id" value="{{ selected_family_id }}" />{% endif %}
       {% if quick_flow %}<input type="hidden" name="quick_flow" value="1" />{% endif %}
-      <input type="search" name="q" value="{{ search_query }}" placeholder="Rechercher une famille..." />
+      <input type="search" name="q" value="{{ search_query }}" placeholder="{% if parent_view %}Rechercher un paiement...{% else %}Rechercher une famille...{% endif %}" />
       <button class="btn btn-secondary" type="submit">Rechercher</button>
       {% if search_query %}
       <a class="btn btn-secondary" href="{{ url_for('main.payments_page', family_id=selected_family_id, quick_flow=1 if quick_flow else None) }}">Réinitialiser</a>

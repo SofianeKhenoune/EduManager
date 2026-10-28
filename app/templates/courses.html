@@ -2,9 +2,7 @@
 <section class="panel section-block">
   <div class="section-head">
     <h1>Cours</h1>
-    <a class="btn btn-secondary" href="{{ url_for('main.index') }}"
-      >Retour au tableau de bord</a
-    >
+    <a class="btn btn-secondary" href="{{ home_url() }}">{{ home_label() }}</a>
   </div>
   <div class="section-actions-row">
     <form method="post" action="{{ url_for('main.delete_all_courses') }}" style="margin:0" onsubmit="return confirm('Supprimer TOUS les cours ? Les séances et inscriptions associées seront également supprimées. Cette action est irréversible.')">
